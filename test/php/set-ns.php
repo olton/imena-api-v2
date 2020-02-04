@@ -12,6 +12,7 @@ $result = $api->Login(IMENA_API_ENDPOINT, IMENA_API_LOGIN, IMENA_API_PASSWORD);
 
 if ($result === false) {
     echo "Login unsuccessful\n";
+    exit(0);
 } else {
     echo "Login successful\n";
 }
