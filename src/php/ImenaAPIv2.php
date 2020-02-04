@@ -2,10 +2,11 @@
 
 require_once "ImenaAPIv2Command.php";
 require_once "ImenaAPIv2ContactType.php";
-require_once "ImenaAPIv2Const.php"; // Use and rename to it ImenaAPIv2ConstTemplate.php
 
 class ImenaAPIv2 {
     private $_version = "2.0.0";
+
+    private $end_point = "";
 
     private $_curl_present = false;
     private $_curl_info = null;
@@ -51,7 +52,7 @@ class ImenaAPIv2 {
         try {
             $ch = curl_init();
 
-            curl_setopt($ch, CURLOPT_URL, IMENA_API_ENDPOINT);
+            curl_setopt($ch, CURLOPT_URL, $this->end_point);
             curl_setopt($ch, CURLOPT_HEADER, 0);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
             curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
@@ -112,7 +113,8 @@ class ImenaAPIv2 {
         return $result["result"];
     }
 
-    public function Login(){
+    public function Login($to, $user, $password){
+        $this->end_point = $to;
         return $this->_execute(ImenaAPIv2Command::LOGIN, [
                 "login" => IMENA_API_LOGIN,
                 "password" => IMENA_API_PASSWORD

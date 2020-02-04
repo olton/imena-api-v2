@@ -60,6 +60,4 @@ node_modules
 adsense
 
 # Special files
-src/php/ImenaAPIv2Const.php
-src/js/ImenaAPIv2Const.json
-src/js/ImenaAPIv2Const.js
+test/php/auth.php
