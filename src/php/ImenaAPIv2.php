@@ -211,6 +211,10 @@ class ImenaAPIv2 {
         ]);
     }
 
+    public function ResellerInfo(){
+        return $this->_execute(ImenaAPIv2Command::TOKEN_INFO);
+    }
+
     public function ResellerBalance(){
         return $this->_execute(ImenaAPIv2Command::RESELLER_BALANCE);
     }
