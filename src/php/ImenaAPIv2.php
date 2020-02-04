@@ -116,8 +116,8 @@ class ImenaAPIv2 {
     public function Login($to, $user, $password){
         $this->end_point = $to;
         return $this->_execute(ImenaAPIv2Command::LOGIN, [
-                "login" => IMENA_API_LOGIN,
-                "password" => IMENA_API_PASSWORD
+                "login" => $user,
+                "password" => $password
         ]);
     }
 
