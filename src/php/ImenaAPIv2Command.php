@@ -16,5 +16,12 @@ class ImenaAPIv2Command {
     const SET_PRIVACY = 'setDomainPrivacy';
     const RESELLER_BALANCE = 'getResellerBalance';
     const RESELLER_PRICES = 'getResellerPrices';
+    const CREATE_RENEW_PAYMENT = 'createDomainRenewPayment';
+    const CREATE_REGISTRATION_PAYMENT = 'createDomainRegistrationPayment';
+    const CREATE_REGISTRATION_ORDER = 'createDomainRegistrationOrder';
+    const CREATE_TRANSFER_PAYMENT = 'createDomainTransferPayment';
+    const CREATE_TRANSFER_ORDER = 'createDomainTransferOrder';
+    const DELETE_ORDER = 'deleteDomainOrder';
+    const PAYMENT_STATUS = 'getResellerPaymentStatus';
 }
 

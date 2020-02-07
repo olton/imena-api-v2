@@ -5,9 +5,9 @@ include "auth.php";
 
 $code = 1050870;
 
-$api = new ImenaAPIv2();
+$api = new ImenaAPIv2(IMENA_API_ENDPOINT);
 
-$result = $api->Login(IMENA_API_ENDPOINT, IMENA_API_LOGIN, IMENA_API_PASSWORD);
+$result = $api->Login(IMENA_API_LOGIN, IMENA_API_PASSWORD);
 
 if ($result === false) {
     echo "Login unsuccessful\n";
