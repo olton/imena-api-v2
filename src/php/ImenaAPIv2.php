@@ -2,6 +2,7 @@
 
 require_once "ImenaAPIv2Command.php";
 require_once "ImenaAPIv2ContactType.php";
+require_once "ImenaAPIv2PaymentStatus.php";
 
 class ImenaAPIv2 {
     private $_version = "2.0.0";
@@ -329,7 +330,8 @@ class ImenaAPIv2 {
         if ($patentNumber && $patentDate) {$data['patentDate'] = $patentDate;}
         if ($nicId) {$data['nicId'] = $nicId;}
 
-        return $this->_execute(ImenaAPIv2Command::CREATE_REGISTRATION_ORDER, $data);
+        $result = $this->_execute(ImenaAPIv2Command::CREATE_REGISTRATION_ORDER, $data);
+        return $result === false ? false : $result["serviceCode"];
     }
 
     public function CreateTransferPayment($code, $term = 1){
@@ -354,7 +356,8 @@ class ImenaAPIv2 {
         if ($patentNumber && $patentDate) {$data['patentDate'] = $patentDate;}
         if ($nicId) {$data['nicId'] = $nicId;}
 
-        return $this->_execute(ImenaAPIv2Command::CREATE_TRANSFER_ORDER, $data);
+        $result = $this->_execute(ImenaAPIv2Command::CREATE_TRANSFER_ORDER, $data);
+        return $result === false ? false : $result["serviceCode"];
     }
 
     public function DeleteUnusedOrder($code){
