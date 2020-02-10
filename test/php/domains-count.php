@@ -14,14 +14,12 @@ if ($result === false) {
     echo "Login successful\n";
 }
 
-$result = $api->Domains();
+$result = $api->DomainsCount();
 
 if ($result === false) {
     echo "Can't get domains list\n";
 } else {
-    foreach ($result as $domain) {
-        echo $domain['domainName'] . "\n";
-    }
+    echo "Domains on account: $result";
 }
 
 $api->Logout();

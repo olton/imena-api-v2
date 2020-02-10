@@ -14,7 +14,7 @@ if ($result === false) {
     echo "Login successful\n";
 }
 
-$result = $api->Domains();
+$result = $api->DomainsBy("mfo");
 
 if ($result === false) {
     echo "Can't get domains list\n";

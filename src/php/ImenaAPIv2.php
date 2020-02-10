@@ -12,6 +12,7 @@ class ImenaAPIv2 {
     private $_curl_present = false;
     private $_curl_info = null;
     private $_curl_raw_result = null;
+    private $_curl_error = null;
 
     private $_tr_prefix = "API-";
     private $_tr_suffix = "-IMENA-v2";
@@ -21,13 +22,16 @@ class ImenaAPIv2 {
     private $_command = "";
     private $_command_array = [];
 
+    private $error_api= null;
     private $error = null;
-    private $api_error = null;
+    private $error_message = "";
+    private $errors = [];
     private $result = [];
 
     public function __construct($endPoint = "") {
         $this->end_point = $endPoint;
         $this->_curl_present = function_exists("curl_exec") && is_callable("curl_exec");
+        if (!$this->_curl_present) throw new Exception("CURL required!");
     }
 
     private function _transactionId(){
@@ -39,8 +43,6 @@ class ImenaAPIv2 {
     }
 
     private function _curlExec($cmd, $data = []){
-        if (!$this->_curl_present) throw new Exception("CURL required!");
-
         $query = [
             "jsonrpc" => "2.0",
             "method" => $cmd,
@@ -50,6 +52,11 @@ class ImenaAPIv2 {
 
         $this->_command = json_encode($query);
         $this->_command_array = $query;
+        $this->error_api = null;
+        $this->error = 0;
+        $this->error_message = "";
+        $this->errors = [];
+        $this->_curl_error = "";
 
         try {
             $ch = curl_init();
@@ -74,12 +81,15 @@ class ImenaAPIv2 {
             $this->result = json_decode($this->_curl_raw_result, true);
 
             if (!isset($this->result["result"])) {
-                $this->api_error = $this->result["error"];
+                $this->error_api = $this->result["error"];
+                $this->error = $this->result["error"]["code"];
+                $this->error_message = $this->result["error"]["message"];
+                $this->errors = isset($this->result["error"]["errors"]) ? $this->result["error"]["errors"] : [];
             }
 
             return $this->result;
         } catch (Exception $e) {
-            $this->error = $e->getMessage();
+            $this->_curl_error = $e->getMessage();
             return false;
         }
     }
@@ -120,7 +130,19 @@ class ImenaAPIv2 {
     }
 
     public function Error($api = true){
-        return $api ? $this->api_error : $this->error;
+        return $api ? $this->error_api : $this->_curl_error;
+    }
+
+    public function ErrorCode(){
+        return $this->error;
+    }
+
+    public function ErrorMessage(){
+        return $this->error_message;
+    }
+
+    public function Errors(){
+        return $this->errors;
     }
 
     public function Command($as_array = false){
@@ -154,9 +176,51 @@ class ImenaAPIv2 {
         return $this->_execute(ImenaAPIv2Command::TOKEN_INFO);
     }
 
-    public function Domains(){
-        $result = $this->_execute(ImenaAPIv2Command::DOMAINS_LIST);
+    public function Domains($limit = 500, $offset = 0){
+        $result = $this->_execute(ImenaAPIv2Command::DOMAINS_LIST, [
+            "limit" => $limit,
+            "offset" => $offset
+        ]);
         return $result === false ? false : $result["list"];
+    }
+
+    public function DomainsBy($filter){
+        $domains = [];
+        $limit = 500;
+        $count = $this->DomainsCount();
+
+        if ($count === false) {
+            return false;
+        }
+
+        if ($count === 0) {
+            return $domains;
+        }
+
+        $pages = round($count / $limit) + 1;
+
+        for($i = 0; $i < $pages; $i++) {
+            $result = $this->Domains($limit, $limit * $i);
+
+            if ($i === 0 && $result === false) {
+                return false;
+            }
+
+            if ($result !== false) foreach ($result as $domain) {
+                if (strpos($domain["domainName"], $filter) !== false) {
+                    $domains['serviceCode'] = $domain;
+                }
+            }
+        }
+        return $domains;
+    }
+
+    public function DomainsCount(){
+        $result = $this->_execute(ImenaAPIv2Command::DOMAINS_LIST, [
+            "limit" => 1,
+            "offset" => 0
+        ]);
+        return $result === false ? false : intval($result["total"]);
     }
 
     public function Domain($code){
