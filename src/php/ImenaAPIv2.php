@@ -2,6 +2,7 @@
 
 require_once "ImenaAPIv2Command.php";
 require_once "ImenaAPIv2ContactType.php";
+require_once "ImenaAPIv2HostingType.php";
 require_once "ImenaAPIv2PaymentStatus.php";
 
 class ImenaAPIv2 {
@@ -245,8 +246,8 @@ class ImenaAPIv2 {
         } else if (is_string($ns)) {
 
             switch (strtolower($ns)) {
-                case 'mirohost': $command = ImenaAPIv2Command::SET_NS_MIROHOST; break;
-                case 'dnshosting': $command = ImenaAPIv2Command::SET_NS_DNSHOSTING; break;
+                case ImenaAPIv2HostingType::MIROHOST: $command = ImenaAPIv2Command::SET_NS_MIROHOST; break;
+                case ImenaAPIv2HostingType::DNS: $command = ImenaAPIv2Command::SET_NS_DNSHOSTING; break;
             }
 
         }
@@ -375,7 +376,6 @@ class ImenaAPIv2 {
      * @param $clientCode
      * @param $domainName
      * @param int $term
-     * @param null $currentStopDate
      * @param null $aeroId
      * @param null $ensAuthKey
      * @param null $patentNumber
