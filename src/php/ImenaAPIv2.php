@@ -14,8 +14,8 @@ class ImenaAPIv2 {
     private $_curl_raw_result = null;
     private $_curl_error = null;
 
-    private $_tr_prefix = "API-";
-    private $_tr_suffix = "-IMENA-v2";
+    private $_tr_prefix = "";
+    private $_tr_suffix = "";
 
     private $_auth_token = null;
 
@@ -28,8 +28,10 @@ class ImenaAPIv2 {
     private $errors = [];
     private $result = [];
 
-    public function __construct($endPoint = "") {
+    public function __construct($endPoint = "", $tr_prefix = "API-", $tr_suffix = "-IMENA-v2") {
         $this->end_point = $endPoint;
+        $this->_tr_prefix = $tr_prefix;
+        $this->_tr_suffix = $tr_suffix;
         $this->_curl_present = function_exists("curl_exec") && is_callable("curl_exec");
         if (!$this->_curl_present) throw new Exception("CURL required!");
     }
@@ -283,7 +285,7 @@ class ImenaAPIv2 {
         return $result === false ? false : true;
     }
 
-    public function RemoveChildNS($code, $host, $ip){
+    public function DeleteChildNS($code, $host, $ip){
         return $this->_execute(ImenaAPIv2Command::DEL_CHILD_NS, [
             "serviceCode" => "".$code,
             "host" => $host,
