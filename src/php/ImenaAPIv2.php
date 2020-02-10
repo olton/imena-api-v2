@@ -361,7 +361,7 @@ class ImenaAPIv2 {
      * @return bool|mixed
      */
     public function CreateRegistrationPayment($code, $term = 1){
-        $result = $this->_execute(ImenaAPIv2Command::CREATE_RENEW_PAYMENT, [
+        $result = $this->_execute(ImenaAPIv2Command::CREATE_REGISTRATION_PAYMENT, [
             "serviceCode" => "".$code,
             "term" => intval($term)
         ]);
@@ -399,7 +399,7 @@ class ImenaAPIv2 {
     }
 
     public function CreateTransferPayment($code, $term = 1){
-        $result =  $this->_execute(ImenaAPIv2Command::CREATE_RENEW_PAYMENT, [
+        $result =  $this->_execute(ImenaAPIv2Command::CREATE_TRANSFER_PAYMENT, [
             "serviceCode" => "".$code,
             "term" => intval($term)
         ]);
@@ -432,7 +432,7 @@ class ImenaAPIv2 {
     }
 
     public function PaymentStatus($paymentId){
-        return $this->_execute(ImenaAPIv2Command::CREATE_RENEW_PAYMENT, [
+        return $this->_execute(ImenaAPIv2Command::PAYMENT_STATUS, [
             "paymentId" => $paymentId
         ]);
     }
