@@ -1,6 +1,9 @@
 # Imena.ua API v2 implementation
 
-This is a PHP implementation of end user class to access to Imena.ua API.
+This is a implementation of end user classes to access to Imena.ua API.
+
++ [x] PHP - in release
++ [ ] JavaScript - in develop
 
 ## Authors
 
