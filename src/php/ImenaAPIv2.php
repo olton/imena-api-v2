@@ -268,13 +268,12 @@ class ImenaAPIv2 {
     }
 
     /**
-     * Return domains list filtered by argument
-     * Checks all domains on reseller account
+     * Return domains list filtered by argument or all account domains
      * Important. May be long operation
      * @param $filter - string, part of domain name
      * @return array|bool
      */
-    public function DomainsBy($filter){
+    public function DomainsBy($filter = null){
         $domains = [];
         $limit = 500;
         $count = $this->DomainsCount();
@@ -287,7 +286,7 @@ class ImenaAPIv2 {
             return $domains;
         }
 
-        $pages = round($count / $limit) + 1;
+        $pages = ceil($count / $limit);
 
         for($i = 0; $i < $pages; $i++) {
             $result = $this->Domains($limit, $limit * $i);
@@ -297,7 +296,11 @@ class ImenaAPIv2 {
             }
 
             if ($result !== false) foreach ($result as $domain) {
-                if (strpos($domain["domainName"], $filter) !== false) {
+                if ($filter) {
+                    if (strpos($domain["domainName"], $filter) !== false) {
+                        $domains['serviceCode'] = $domain;
+                    }
+                } else {
                     $domains['serviceCode'] = $domain;
                 }
             }
