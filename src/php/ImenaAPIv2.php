@@ -6,7 +6,7 @@ require_once "ImenaAPIv2HostingType.php";
 require_once "ImenaAPIv2PaymentStatus.php";
 
 class ImenaAPIv2 {
-    private $_version = "2.0.0";
+    private $_version = "1.0.0";
 
     private $end_point = "";
 
@@ -29,6 +29,13 @@ class ImenaAPIv2 {
     private $errors = [];
     private $result = [];
 
+    /**
+     * ImenaAPIv2 constructor.
+     * @param string $endPoint
+     * @param string $tr_prefix
+     * @param string $tr_suffix
+     * @throws Exception
+     */
     public function __construct($endPoint = "", $tr_prefix = "API-", $tr_suffix = "-IMENA-v2") {
         $this->end_point = $endPoint;
         $this->_tr_prefix = $tr_prefix;
@@ -37,6 +44,18 @@ class ImenaAPIv2 {
         if (!$this->_curl_present) throw new Exception("CURL required!");
     }
 
+    /**
+     * Setup endpoint
+     * @param $endPoint
+     */
+    public function SetEndPoint($endPoint = ""){
+        $this->end_point = $endPoint;
+    }
+
+    /**
+     * Generate transaction ID
+     * @return string
+     */
     private function _transactionId(){
         return $this->_tr_prefix
             . date('YmdHis')
@@ -45,6 +64,12 @@ class ImenaAPIv2 {
             . $this->_tr_suffix;
     }
 
+    /**
+     * Execute API command with CURL lib
+     * @param $cmd
+     * @param array $data
+     * @return array|bool|mixed
+     */
     private function _curlExec($cmd, $data = []){
         $query = [
             "jsonrpc" => "2.0",
@@ -55,11 +80,6 @@ class ImenaAPIv2 {
 
         $this->_command = json_encode($query);
         $this->_command_array = $query;
-        $this->error_api = null;
-        $this->error = 0;
-        $this->error_message = "";
-        $this->errors = [];
-        $this->_curl_error = "";
 
         try {
             $ch = curl_init();
@@ -97,6 +117,12 @@ class ImenaAPIv2 {
         }
     }
 
+    /**
+     * Execute API method
+     * @param $command
+     * @param array $arguments
+     * @return bool|mixed
+     */
     private function _execute($command, $arguments = []){
         if ($command !== ImenaAPIv2Command::LOGIN) {
             $arguments["authToken"] = $this->_auth_token;
@@ -116,43 +142,82 @@ class ImenaAPIv2 {
         return !isset($result["result"]) ? false : $result["result"];
     }
 
+    /**
+     * Return class version
+     * @return string
+     */
     public function Ver(){
         return $this->_version;
     }
 
+    /**
+     * Return last CURL info for executed command
+     * @return null
+     */
     public function Info(){
         return $this->_curl_info;
     }
 
+    /**
+     * Return last raw result from CURL executing
+     * @return null
+     */
     public function ResultRaw(){
         return $this->_curl_raw_result;
     }
 
+    /**
+     * Return API result
+     * @return array
+     */
     public function Result(){
         return $this->result;
     }
 
+    /**
+     * Get last error. API or CURL
+     * @param bool $api
+     * @return array or string
+     */
     public function Error($api = true){
         return $api ? $this->error_api : $this->_curl_error;
     }
 
+    /**
+     * Get last API error code
+     * @return null
+     */
     public function ErrorCode(){
         return $this->error;
     }
 
+    /**
+     * Get last API error message
+     * @return string
+     */
     public function ErrorMessage(){
         return $this->error_message;
     }
 
+    /**
+     * Get errors, if exist in error object
+     * @return array
+     */
     public function Errors(){
         return $this->errors;
     }
 
+    /**
+     * Get last API command
+     * @param bool $as_array
+     * @return array|string
+     */
     public function Command($as_array = false){
         return $as_array ? $this->_command_array : $this->_command;
     }
 
     /**
+     * Login to endpoint or send second step verification
      * @param $user
      * @param $password
      * @param null $smsCode
@@ -170,15 +235,30 @@ class ImenaAPIv2 {
         return $result === false ? false : $result["authToken"];
     }
 
+    /**
+     * Logout from endpoint
+     * @return bool
+     */
     public function Logout(){
         $result = $this->_execute(ImenaAPIv2Command::LOGOUT);
         return $result === false ? false : true;
     }
 
+    /**
+     * Get Reseller/Client info
+     * Return info for current logged client
+     * @return bool|mixed
+     */
     public function TokenInfo(){
         return $this->_execute(ImenaAPIv2Command::TOKEN_INFO);
     }
 
+    /**
+     * Return domains list
+     * @param int $limit
+     * @param int $offset
+     * @return bool|mixed
+     */
     public function Domains($limit = 500, $offset = 0){
         $result = $this->_execute(ImenaAPIv2Command::DOMAINS_LIST, [
             "limit" => $limit,
@@ -187,6 +267,13 @@ class ImenaAPIv2 {
         return $result === false ? false : $result["list"];
     }
 
+    /**
+     * Return domains list filtered by argument
+     * Checks all domains on reseller account
+     * Important. May be long operation
+     * @param $filter - string, part of domain name
+     * @return array|bool
+     */
     public function DomainsBy($filter){
         $domains = [];
         $limit = 500;
@@ -218,6 +305,10 @@ class ImenaAPIv2 {
         return $domains;
     }
 
+    /**
+     * Return count domains on account
+     * @return bool|int
+     */
     public function DomainsCount(){
         $result = $this->_execute(ImenaAPIv2Command::DOMAINS_LIST, [
             "limit" => 1,
@@ -226,12 +317,29 @@ class ImenaAPIv2 {
         return $result === false ? false : intval($result["total"]);
     }
 
+    /**
+     * Get domain info by service code
+     * @param $code - string - domain service code
+     * @return bool|mixed
+     */
     public function Domain($code){
         return $this->_execute(ImenaAPIv2Command::DOMAIN_INFO, [
             "serviceCode" => "".$code
         ]);
     }
 
+    /**
+     * Set name servers.
+     * If second argument is an array, command sets user defined NS
+     * If second argument is a string, command set one of default sets
+     * For default sets you must use constants ImenaAPIv2HostingType::MIROHOST or ImenaAPIv2HostingType::DNS
+     * ImenaAPIv2HostingType::DNS - for DNSHosting
+     * ImenaAPIv2HostingType::MIROHOST - for Mirohost
+     * ImenaAPIv2HostingType::DEFAULTS - for Imena default NS
+     * @param $code
+     * @param array $ns
+     * @return bool
+     */
     public function SetNS($code, $ns = []){
         $command = ImenaAPIv2Command::SET_NS_DEFAULT;
         $data = [
@@ -256,6 +364,11 @@ class ImenaAPIv2 {
         return $result === false ? false : true;
     }
 
+    /**
+     * Short method to set Imena default NS
+     * @param $code - string - domain service code
+     * @return bool
+     */
     public function SetDefaultNS($code){
         $result = $this->_execute(ImenaAPIv2Command::SET_NS_DEFAULT, [
             "serviceCode" => "".$code
@@ -263,6 +376,11 @@ class ImenaAPIv2 {
         return $result === false ? false : true;
     }
 
+    /**
+     * Short method to set DNSHosting NS
+     * @param $code - string - domain service code
+     * @return bool
+     */
     public function SetDnsHostingNS($code){
         $result =  $this->_execute(ImenaAPIv2Command::SET_NS_DNSHOSTING, [
             "serviceCode" => "".$code
@@ -270,6 +388,11 @@ class ImenaAPIv2 {
         return $result === false ? false : true;
     }
 
+    /**
+     * Short method to set Mirohost NS
+     * @param $code - string - domain service code
+     * @return bool
+     */
     public function SetMirohostNS($code){
         $result = $this->_execute(ImenaAPIv2Command::SET_NS_MIROHOST, [
             "serviceCode" => "".$code
@@ -277,6 +400,13 @@ class ImenaAPIv2 {
         return $result === false ? false : true;
     }
 
+    /**
+     * Add child NS
+     * @param $code - string, domain service code
+     * @param $host - string, host name
+     * @param $ip - string, ip address
+     * @return bool
+     */
     public function AddChildNS($code, $host, $ip){
         $result = $this->_execute(ImenaAPIv2Command::ADD_CHILD_NS, [
             "serviceCode" => "".$code,
@@ -286,6 +416,13 @@ class ImenaAPIv2 {
         return $result === false ? false : true;
     }
 
+    /**
+     * Delete child NS
+     * @param $code - string, domain service code
+     * @param $host - string, host name
+     * @param $ip - string, ip address
+     * @return bool|mixed
+     */
     public function DeleteChildNS($code, $host, $ip){
         return $this->_execute(ImenaAPIv2Command::DEL_CHILD_NS, [
             "serviceCode" => "".$code,
@@ -294,6 +431,26 @@ class ImenaAPIv2 {
         ]);
     }
 
+    /**
+     * Set domain contact
+     * @param $code - string - domain service code
+     * @param $contactType - string - use constants, defined in ImenaAPIv2ContactType (ImenaAPIv2ContactType::ADMIN, ImenaAPIv2ContactType::TECH, ImenaAPIv2ContactType::OWNER, ImenaAPIv2ContactType::BILLING)
+     * @param $contactData - array
+     * firstName - имя
+     * middleName - отчество
+     * lastName - фамилия
+     * company - компания
+     * email
+     * country - ISO код страны
+     * postalCode - почтовый код
+     * region - область
+     * city - город
+     * address - строка адреса (улица, дом, квартира)
+     * address2 - 2 строка адреса
+     * phone - телефонный номер в формате E164
+     * fax - телефонный номер в формате E164
+     * @return bool
+     */
     public function SetDomainContact($code, $contactType, $contactData){
         $result = $this->_execute(ImenaAPIv2Command::UPD_CONTACT, [
             "serviceCode" => "".$code,
@@ -303,6 +460,12 @@ class ImenaAPIv2 {
         return $result === false ? false : true;
     }
 
+    /**
+     * Set contact disclosure, if second argument is true, contact will be disclosed
+     * @param $code
+     * @param bool $disclose
+     * @return bool
+     */
     public function SetPrivacy($code, $disclose = false){
         $result = $this->_execute(ImenaAPIv2Command::SET_PRIVACY, [
             "serviceCode" => "".$code,
@@ -319,14 +482,27 @@ class ImenaAPIv2 {
         return $this->TokenInfo();
     }
 
+    /**
+     * Get reseller balance
+     * @return bool|mixed
+     */
     public function ResellerBalance(){
         return $this->_execute(ImenaAPIv2Command::RESELLER_BALANCE);
     }
 
+    /**
+     * Get Reseller prices
+     * @return bool|mixed
+     */
     public function ResellerPrices(){
         return $this->_execute(ImenaAPIv2Command::RESELLER_PRICES);
     }
 
+    /**
+     * Get reseller prices for specified domains or part of domain name
+     * @param $domain
+     * @return array|bool
+     */
     public function ResellerPriceFor($domain){
         $result = $this->ResellerPrices();
         if ($result === false) {
@@ -400,6 +576,12 @@ class ImenaAPIv2 {
         return $result === false ? false : $result["serviceCode"];
     }
 
+    /**
+     * Create transfer payment, must be executed after call method createTransferOrder
+     * @param $code
+     * @param int $term
+     * @return bool|mixed
+     */
     public function CreateTransferPayment($code, $term = 1){
         $result =  $this->_execute(ImenaAPIv2Command::CREATE_TRANSFER_PAYMENT, [
             "serviceCode" => "".$code,
@@ -408,6 +590,19 @@ class ImenaAPIv2 {
         return $result === false ? false : $result["paymentId"];
     }
 
+    /**
+     * Create transfer order and service code for future domain
+     * @param $clientCode
+     * @param $domainName
+     * @param int $term
+     * @param string $authCode
+     * @param null $aeroId
+     * @param null $ensAuthKey
+     * @param null $patentNumber
+     * @param null $patentDate
+     * @param null $nicId
+     * @return bool|mixed
+     */
     public function CreateTransferOrder($clientCode, $domainName, $term = 1, $authCode = "", $aeroId = null, $ensAuthKey = null, $patentNumber = null, $patentDate = null, $nicId = null){
         $data = [
             "clientCode" => "".$clientCode,
@@ -426,6 +621,11 @@ class ImenaAPIv2 {
         return $result === false ? false : $result["serviceCode"];
     }
 
+    /**
+     * Delete unused orders for domain, defined with service code
+     * @param $code
+     * @return bool
+     */
     public function DeleteUnusedOrder($code){
         $result = $this->_execute(ImenaAPIv2Command::DELETE_ORDER, [
             "serviceCode" => "".$code
@@ -433,6 +633,11 @@ class ImenaAPIv2 {
         return $result === false ? false : true;
     }
 
+    /**
+     * get payment status. You can get paymentId after execute methods create***Payment
+     * @param $paymentId
+     * @return bool|mixed
+     */
     public function PaymentStatus($paymentId){
         return $this->_execute(ImenaAPIv2Command::PAYMENT_STATUS, [
             "paymentId" => $paymentId
