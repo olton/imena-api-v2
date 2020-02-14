@@ -4,6 +4,7 @@ require_once "ImenaAPIv2Command.php";
 require_once "ImenaAPIv2ContactType.php";
 require_once "ImenaAPIv2HostingType.php";
 require_once "ImenaAPIv2PaymentStatus.php";
+require_once "ImenaAPIv2SecondAuthType.php";
 
 class ImenaAPIv2 {
     private $_version = "1.0.0";
@@ -22,6 +23,9 @@ class ImenaAPIv2 {
 
     private $_command = "";
     private $_command_array = [];
+
+    private $_user = "";
+    private $_password = "";
 
     private $error_api= null;
     private $error = null;
@@ -225,12 +229,34 @@ class ImenaAPIv2 {
      * @return bool
      */
     public function Login($user, $password, $smsCode = null, $gaCode = null){
+        $this->_user = $user;
+        $this->_password = $password;
         $data = [
             "login" => $user,
             "password" => $password
         ];
         if ($smsCode) {$data["smsCode"] = $smsCode;}
         if ($gaCode) {$data["gaCode"] = $gaCode;}
+        $result = $this->_execute(ImenaAPIv2Command::LOGIN, $data);
+        return $result === false ? false : $result["authToken"];
+    }
+
+    /**
+     * Second auth
+     * @param $code
+     * @param string $type
+     * @return bool|mixed
+     */
+    public function SecondAuth($code, $type = ImenaAPIv2SecondAuthType::SMS){
+        $data = [
+            "login" => $this->_user,
+            "password" => $this->_password
+        ];
+        if (strtolower($type) === ImenaAPIv2SecondAuthType::SMS) {
+            $data["smsCode"] = $code;
+        } else {
+            $data["gaCode"] = $code;
+        }
         $result = $this->_execute(ImenaAPIv2Command::LOGIN, $data);
         return $result === false ? false : $result["authToken"];
     }
