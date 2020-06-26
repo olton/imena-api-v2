@@ -20,7 +20,7 @@ if ($result === false) {
     echo "Can't get domains list\n";
 } else {
     foreach ($result as $domain) {
-        echo $domain['domainName'] . "\n";
+        echo $domain['serviceCode'] ." : ". $domain['domainName'] . "\n";
     }
 }
 

@@ -1,10 +1,6 @@
 <?php
 
-require_once "ImenaAPIv2Command.php";
-require_once "ImenaAPIv2ContactType.php";
-require_once "ImenaAPIv2HostingType.php";
-require_once "ImenaAPIv2PaymentStatus.php";
-require_once "ImenaAPIv2SecondAuthType.php";
+require_once "ImenaAPIv2Const.php";
 
 class ImenaAPIv2 {
     private $_version = "1.0.0";
@@ -115,7 +111,7 @@ class ImenaAPIv2 {
             }
 
             return $this->result;
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             $this->_curl_error = $e->getMessage();
             return false;
         }
@@ -128,7 +124,7 @@ class ImenaAPIv2 {
      * @return bool|mixed
      */
     private function _execute($command, $arguments = []){
-        if ($command !== ImenaAPIv2Command::LOGIN) {
+        if ($command !== ImenaAPIv2Const::COMMAND_LOGIN) {
             $arguments["authToken"] = $this->_auth_token;
         }
 
@@ -137,10 +133,10 @@ class ImenaAPIv2 {
         if (!$result || !isset($result["result"])) {
             return false;
         }
-        if ($command === ImenaAPIv2Command::LOGIN) {
+        if ($command === ImenaAPIv2Const::COMMAND_LOGIN) {
             $this->_auth_token = $result["result"]["authToken"];
         }
-        if ($command === ImenaAPIv2Command::LOGOUT) {
+        if ($command === ImenaAPIv2Const::COMMAND_LOGOUT) {
             $this->_auth_token = null;
         }
         return !isset($result["result"]) ? false : $result["result"];
@@ -237,7 +233,7 @@ class ImenaAPIv2 {
         ];
         if ($smsCode) {$data["smsCode"] = $smsCode;}
         if ($gaCode) {$data["gaCode"] = $gaCode;}
-        $result = $this->_execute(ImenaAPIv2Command::LOGIN, $data);
+        $result = $this->_execute(ImenaAPIv2Const::COMMAND_LOGIN, $data);
         return $result === false ? false : $result["authToken"];
     }
 
@@ -247,17 +243,17 @@ class ImenaAPIv2 {
      * @param string $type
      * @return bool|mixed
      */
-    public function SecondAuth($code, $type = ImenaAPIv2SecondAuthType::SMS){
+    public function SecondAuth($code, $type = ImenaAPIv2Const::SECOND_AUTH_SMS){
         $data = [
             "login" => $this->_user,
             "password" => $this->_password
         ];
-        if (strtolower($type) === ImenaAPIv2SecondAuthType::SMS) {
+        if (strtolower($type) === ImenaAPIv2Const::SECOND_AUTH_SMS) {
             $data["smsCode"] = $code;
         } else {
             $data["gaCode"] = $code;
         }
-        $result = $this->_execute(ImenaAPIv2Command::LOGIN, $data);
+        $result = $this->_execute(ImenaAPIv2Const::COMMAND_LOGIN, $data);
         return $result === false ? false : $result["authToken"];
     }
 
@@ -266,7 +262,7 @@ class ImenaAPIv2 {
      * @return bool
      */
     public function Logout(){
-        $result = $this->_execute(ImenaAPIv2Command::LOGOUT);
+        $result = $this->_execute(ImenaAPIv2Const::COMMAND_LOGOUT);
         return $result === false ? false : true;
     }
 
@@ -276,7 +272,7 @@ class ImenaAPIv2 {
      * @return bool|mixed
      */
     public function TokenInfo(){
-        return $this->_execute(ImenaAPIv2Command::TOKEN_INFO);
+        return $this->_execute(ImenaAPIv2Const::COMMAND_TOKEN_INFO);
     }
 
     /**
@@ -286,7 +282,7 @@ class ImenaAPIv2 {
      * @return bool|mixed
      */
     public function Domains($limit = 500, $offset = 0){
-        $result = $this->_execute(ImenaAPIv2Command::DOMAINS_LIST, [
+        $result = $this->_execute(ImenaAPIv2Const::COMMAND_DOMAINS_LIST, [
             "limit" => $limit,
             "offset" => $offset
         ]);
@@ -339,7 +335,7 @@ class ImenaAPIv2 {
      * @return bool|int
      */
     public function DomainsCount(){
-        $result = $this->_execute(ImenaAPIv2Command::DOMAINS_LIST, [
+        $result = $this->_execute(ImenaAPIv2Const::COMMAND_DOMAINS_LIST, [
             "limit" => 1,
             "offset" => 0
         ]);
@@ -352,9 +348,33 @@ class ImenaAPIv2 {
      * @return bool|mixed
      */
     public function Domain($code){
-        return $this->_execute(ImenaAPIv2Command::DOMAIN_INFO, [
+        return $this->_execute(ImenaAPIv2Const::COMMAND_DOMAIN_INFO, [
             "serviceCode" => "".$code
         ]);
+    }
+
+    public function NS($code){
+        $domain = $this->Domain($code);
+        return $domain === false ? false : $domain["nameservers"];
+    }
+
+    public function ChildNS($code){
+        $domain = $this->Domain($code);
+        return $domain === false ? false : $domain["childNameservers"];
+    }
+
+    public function Contacts($code, $withPrivacy = false){
+        $domain = $this->Domain($code);
+        $contacts = [];
+        if ($domain === false) return false;
+        foreach ($domain["contacts"] as $contact) {
+            $contacts[$contact["contactType"]] = $contact["contact"];
+        }
+
+        if ($withPrivacy === true) {
+            $contacts['privacy'] = $domain["isWhoisPrivacyEnabled"];
+        }
+        return $contacts;
     }
 
     /**
@@ -370,21 +390,21 @@ class ImenaAPIv2 {
      * @return bool
      */
     public function SetNS($code, $ns = []){
-        $command = ImenaAPIv2Command::SET_NS_DEFAULT;
+        $command = ImenaAPIv2Const::COMMAND_SET_NS_DEFAULT;
         $data = [
             "serviceCode" => $code
         ];
 
         if (is_array($ns)) {
 
-            $command = ImenaAPIv2Command::SET_NS;
+            $command = ImenaAPIv2Const::COMMAND_SET_NS;
             $data["list"] = $ns;
 
         } else if (is_string($ns)) {
 
             switch (strtolower($ns)) {
-                case ImenaAPIv2HostingType::MIROHOST: $command = ImenaAPIv2Command::SET_NS_MIROHOST; break;
-                case ImenaAPIv2HostingType::DNS: $command = ImenaAPIv2Command::SET_NS_DNSHOSTING; break;
+                case ImenaAPIv2Const::HOSTING_TYPE_MIROHOST: $command = ImenaAPIv2Const::COMMAND_SET_NS_MIROHOST; break;
+                case ImenaAPIv2Const::HOSTING_TYPE_DNS: $command = ImenaAPIv2Const::COMMAND_SET_NS_DNSHOSTING; break;
             }
 
         }
@@ -399,10 +419,7 @@ class ImenaAPIv2 {
      * @return bool
      */
     public function SetDefaultNS($code){
-        $result = $this->_execute(ImenaAPIv2Command::SET_NS_DEFAULT, [
-            "serviceCode" => "".$code
-        ]);
-        return $result === false ? false : true;
+        return $this->SetNS($code, $command = ImenaAPIv2Const::COMMAND_SET_NS_DEFAULT);
     }
 
     /**
@@ -411,10 +428,7 @@ class ImenaAPIv2 {
      * @return bool
      */
     public function SetDnsHostingNS($code){
-        $result =  $this->_execute(ImenaAPIv2Command::SET_NS_DNSHOSTING, [
-            "serviceCode" => "".$code
-        ]);
-        return $result === false ? false : true;
+        return $this->SetNS($code, $command = ImenaAPIv2Const::COMMAND_SET_NS_DNSHOSTING);
     }
 
     /**
@@ -423,10 +437,7 @@ class ImenaAPIv2 {
      * @return bool
      */
     public function SetMirohostNS($code){
-        $result = $this->_execute(ImenaAPIv2Command::SET_NS_MIROHOST, [
-            "serviceCode" => "".$code
-        ]);
-        return $result === false ? false : true;
+        return $this->SetNS($code, $command = ImenaAPIv2Const::COMMAND_SET_NS_MIROHOST);
     }
 
     /**
@@ -437,7 +448,7 @@ class ImenaAPIv2 {
      * @return bool
      */
     public function AddChildNS($code, $host, $ip){
-        $result = $this->_execute(ImenaAPIv2Command::ADD_CHILD_NS, [
+        $result = $this->_execute(ImenaAPIv2Const::COMMAND_ADD_CHILD_NS, [
             "serviceCode" => "".$code,
             "host" => $host,
             "ip" => $ip
@@ -453,7 +464,7 @@ class ImenaAPIv2 {
      * @return bool|mixed
      */
     public function DeleteChildNS($code, $host, $ip){
-        return $this->_execute(ImenaAPIv2Command::DEL_CHILD_NS, [
+        return $this->_execute(ImenaAPIv2Const::COMMAND_DEL_CHILD_NS, [
             "serviceCode" => "".$code,
             "host" => $host,
             "ip" => $ip
@@ -481,7 +492,7 @@ class ImenaAPIv2 {
      * @return bool
      */
     public function SetDomainContact($code, $contactType, $contactData){
-        $result = $this->_execute(ImenaAPIv2Command::UPD_CONTACT, [
+        $result = $this->_execute(ImenaAPIv2Const::COMMAND_UPD_CONTACT, [
             "serviceCode" => "".$code,
             "contactType" => $contactType,
             "contact" => $contactData
@@ -496,7 +507,7 @@ class ImenaAPIv2 {
      * @return bool
      */
     public function SetPrivacy($code, $disclose = false){
-        $result = $this->_execute(ImenaAPIv2Command::SET_PRIVACY, [
+        $result = $this->_execute(ImenaAPIv2Const::COMMAND_SET_PRIVACY, [
             "serviceCode" => "".$code,
             "whoisPrivacy" => !$disclose
         ]);
@@ -516,7 +527,7 @@ class ImenaAPIv2 {
      * @return bool|mixed
      */
     public function ResellerBalance(){
-        return $this->_execute(ImenaAPIv2Command::RESELLER_BALANCE);
+        return $this->_execute(ImenaAPIv2Const::COMMAND_RESELLER_BALANCE);
     }
 
     /**
@@ -524,7 +535,7 @@ class ImenaAPIv2 {
      * @return bool|mixed
      */
     public function ResellerPrices(){
-        return $this->_execute(ImenaAPIv2Command::RESELLER_PRICES);
+        return $this->_execute(ImenaAPIv2Const::COMMAND_RESELLER_PRICES);
     }
 
     /**
@@ -554,7 +565,7 @@ class ImenaAPIv2 {
      * @return bool|mixed
      */
     public function CreateRenewPayment($code, $currentStopDate, $term = 1){
-        $result = $this->_execute(ImenaAPIv2Command::CREATE_RENEW_PAYMENT, [
+        $result = $this->_execute(ImenaAPIv2Const::COMMAND_CREATE_RENEW_PAYMENT, [
             "serviceCode" => "".$code,
             "currentStopDate" => $currentStopDate,
             "term" => intval($term)
@@ -569,7 +580,7 @@ class ImenaAPIv2 {
      * @return bool|mixed
      */
     public function CreateRegistrationPayment($code, $term = 1){
-        $result = $this->_execute(ImenaAPIv2Command::CREATE_REGISTRATION_PAYMENT, [
+        $result = $this->_execute(ImenaAPIv2Const::COMMAND_CREATE_REGISTRATION_PAYMENT, [
             "serviceCode" => "".$code,
             "term" => intval($term)
         ]);
@@ -601,7 +612,7 @@ class ImenaAPIv2 {
         if ($patentNumber && $patentDate) {$data['patentDate'] = $patentDate;}
         if ($nicId) {$data['nicId'] = $nicId;}
 
-        $result = $this->_execute(ImenaAPIv2Command::CREATE_REGISTRATION_ORDER, $data);
+        $result = $this->_execute(ImenaAPIv2Const::COMMAND_CREATE_REGISTRATION_ORDER, $data);
         return $result === false ? false : $result["serviceCode"];
     }
 
@@ -612,7 +623,7 @@ class ImenaAPIv2 {
      * @return bool|mixed
      */
     public function CreateTransferPayment($code, $term = 1){
-        $result =  $this->_execute(ImenaAPIv2Command::CREATE_TRANSFER_PAYMENT, [
+        $result =  $this->_execute(ImenaAPIv2Const::COMMAND_CREATE_TRANSFER_PAYMENT, [
             "serviceCode" => "".$code,
             "term" => intval($term)
         ]);
@@ -646,7 +657,7 @@ class ImenaAPIv2 {
         if ($patentNumber && $patentDate) {$data['patentDate'] = $patentDate;}
         if ($nicId) {$data['nicId'] = $nicId;}
 
-        $result = $this->_execute(ImenaAPIv2Command::CREATE_TRANSFER_ORDER, $data);
+        $result = $this->_execute(ImenaAPIv2Const::COMMAND_CREATE_TRANSFER_ORDER, $data);
         return $result === false ? false : $result["serviceCode"];
     }
 
@@ -656,7 +667,7 @@ class ImenaAPIv2 {
      * @return bool
      */
     public function DeleteUnusedOrder($code){
-        $result = $this->_execute(ImenaAPIv2Command::DELETE_ORDER, [
+        $result = $this->_execute(ImenaAPIv2Const::COMMAND_DELETE_ORDER, [
             "serviceCode" => "".$code
         ]);
         return $result === false ? false : true;
@@ -668,7 +679,7 @@ class ImenaAPIv2 {
      * @return bool|mixed
      */
     public function PaymentStatus($paymentId){
-        return $this->_execute(ImenaAPIv2Command::PAYMENT_STATUS, [
+        return $this->_execute(ImenaAPIv2Const::COMMAND_PAYMENT_STATUS, [
             "paymentId" => $paymentId
         ]);
     }
