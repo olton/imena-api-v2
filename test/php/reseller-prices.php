@@ -1,5 +1,7 @@
 <?php
 
+namespace Services\ImenaV2;
+
 include "./../../src/php/ImenaAPIv2.php";
 include "auth.php";
 

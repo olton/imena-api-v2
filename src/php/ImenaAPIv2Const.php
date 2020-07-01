@@ -1,5 +1,7 @@
 <?php
 
+namespace Services\ImenaV2;
+
 class ImenaAPIv2Const {
     const COMMAND_LOGIN = 'authenticateResellerUser';
     const COMMAND_LOGOUT = 'invalidateAuthToken';

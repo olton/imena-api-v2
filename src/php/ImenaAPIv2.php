@@ -1,6 +1,10 @@
 <?php
 
+namespace Services\ImenaV2;
+
 require_once "ImenaAPIv2Const.php";
+
+use Exception;
 
 class ImenaAPIv2 {
     private $_version = "1.0.0";
@@ -117,6 +121,13 @@ class ImenaAPIv2 {
         }
     }
 
+    private function _resetError(){
+        $this->error_api = null;
+        $this->error = null;
+        $this->error_message = "";
+        $this->errors = [];
+    }
+
     /**
      * Execute API method
      * @param $command
@@ -124,6 +135,8 @@ class ImenaAPIv2 {
      * @return bool|mixed
      */
     private function _execute($command, $arguments = []){
+        $this->_resetError();
+        
         if ($command !== ImenaAPIv2Const::COMMAND_LOGIN) {
             $arguments["authToken"] = $this->_auth_token;
         }
@@ -320,10 +333,8 @@ class ImenaAPIv2 {
             if ($result !== false) foreach ($result as $domain) {
                 if ($filter) {
                     if (strpos($domain["domainName"], $filter) !== false) {
-                        $domains['serviceCode'] = $domain;
+                        $domains[$domain["serviceCode"]] = $domain;
                     }
-                } else {
-                    $domains['serviceCode'] = $domain;
                 }
             }
         }

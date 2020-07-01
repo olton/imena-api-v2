@@ -1,7 +1,9 @@
 <?php
 
+namespace Services\ImenaV2;
+
 include "./../../src/php/ImenaAPIv2.php";
-include "auth.php";
+include "auth2.php";
 
 $api = new ImenaAPIv2(IMENA_API_ENDPOINT_P);
 
@@ -14,13 +16,13 @@ if ($result === false) {
     echo "Login successful\n";
 }
 
-$result = $api->DomainsBy("mfo");
+$result = $api->DomainsBy("pimenov");
 
 if ($result === false) {
     echo "Can't get domains list\n";
 } else {
-    foreach ($result as $domain) {
-        echo $domain['serviceCode'] ." : ". $domain['domainName'] . "\n";
+    foreach ($result as $code => $domain) {
+        echo $code ." : ". $domain['domainName'] . "\n";
     }
 }
 
