@@ -33,6 +33,11 @@ class ImenaAPIv2 {
     private $errors = [];
     private $result = [];
 
+    private $userType;
+    private $userExpired;
+    private $userInfo;
+    private $logged = false;
+
     /**
      * ImenaAPIv2 constructor.
      * @param string $endPoint
@@ -244,9 +249,16 @@ class ImenaAPIv2 {
             "login" => $user,
             "password" => $password
         ];
+
         if ($smsCode) {$data["smsCode"] = $smsCode;}
         if ($gaCode) {$data["gaCode"] = $gaCode;}
+
         $result = $this->_execute(ImenaAPIv2Const::COMMAND_LOGIN, $data);
+
+        if ($result !== false) {
+            $this->logged = true;
+        }
+
         return $result === false ? false : $result["authToken"];
     }
 
@@ -275,8 +287,14 @@ class ImenaAPIv2 {
      * @return bool
      */
     public function Logout(){
+        $this->userType = null;
+        $this->userExpired = null;
+        $this->userInfo = null;
+        $this->logged = false;
+
         $result = $this->_execute(ImenaAPIv2Const::COMMAND_LOGOUT);
-        return $result === false ? false : true;
+
+        return $result !== false;
     }
 
     /**
@@ -285,7 +303,37 @@ class ImenaAPIv2 {
      * @return bool|mixed
      */
     public function TokenInfo(){
-        return $this->_execute(ImenaAPIv2Const::COMMAND_TOKEN_INFO);
+        $result = $this->_execute(ImenaAPIv2Const::COMMAND_TOKEN_INFO);
+
+        $this->userType = $result["userType"];
+        $this->userExpired = $result["expiredAt"];
+        $this->userInfo = $result["user"];
+
+        return $result;
+    }
+
+    /**
+     * get user type clientUser | resellerUser
+     * @return mixed
+     */
+    public function GetUserType(){
+        return $this->userType;
+    }
+
+    /**
+     * get date of auth token expired
+     * @return mixed
+     */
+    public function GetUserExpired(){
+        return $this->userExpired;
+    }
+
+    /**
+     * get user info
+     * @return mixed
+     */
+    public function GetUserInfo(){
+        return $this->userInfo;
     }
 
     /**
