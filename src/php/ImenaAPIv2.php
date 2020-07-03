@@ -745,8 +745,9 @@ class ImenaAPIv2 {
      * @param string $language ua|ru|en
      * @param string $clientType individual|sole proprietor|legal entity
      * @param bool $resident
-     * @param struct $contact
-     * @param struct $legal
+     * @param array $contact
+     * @param array $legal
+     * @return bool|mixed
      *
      * contactData = [
      *      country*
@@ -784,6 +785,7 @@ class ImenaAPIv2 {
             $data["legalData"] = $legal;
         }
 
-        return $this->_execute(ImenaAPIv2Const::COMMAND_CREATE_CLIENT, $data);
+        $result = $this->_execute(ImenaAPIv2Const::COMMAND_CREATE_CLIENT, $data);
+        return $result === false ? false : $result["clientCode"];
    }
 }
