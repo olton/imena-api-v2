@@ -8,6 +8,7 @@ class ImenaAPIv2Const {
     const COMMAND_TOKEN_INFO = 'getAuthTokenInfo';
     const COMMAND_DOMAINS_LIST = 'getDomainsList';
     const COMMAND_DOMAIN_INFO = 'getDomain';
+    const COMMAND_DOMAIN_INFO_SHORT = 'getDomainInfoByName';
     const COMMAND_SET_NS = 'editDomainNameserversList';
     const COMMAND_SET_NS_DEFAULT = 'setDomainNameserversToDefault';
     const COMMAND_SET_NS_DNSHOSTING = 'setDomainNameserversToDnshosting';
@@ -30,6 +31,8 @@ class ImenaAPIv2Const {
     const COMMAND_CLIENT_INFO = 'getClient';
     const COMMAND_CLIENT_LIST = 'getResellerClientsList';
     const COMMAND_PICK_DOMAIN = 'pickDomainForReseller';
+    const COMMAND_GET_AUTH_CODE = 'initOutgoingDomainTransfer';
+    const COMMAND_INTERNAL_TRANSFER = 'initOutgoingDomainTransfer';
 
     const CONTACT_ADMIN = 'admin-c';
     const CONTACT_TECH = 'tech-c';

@@ -364,16 +364,43 @@ class ImenaAPIv2 {
         ]);
     }
 
+    /**
+     * get short info about domain
+     * @param $domain_name
+     * @return bool|mixed
+     */
+    public function DomainInfo($domain_name){
+        return $this->_execute(ImenaAPIv2Const::COMMAND_DOMAIN_INFO_SHORT, [
+            "domainName" => $domain_name
+        ]);
+    }
+
+    /**
+     * get domain nameservers
+     * @param $code
+     * @return bool|mixed
+     */
     public function NS($code){
         $domain = $this->Domain($code);
         return $domain === false ? false : $domain["nameservers"];
     }
 
+    /**
+     * get domain child nameservers
+     * @param $code
+     * @return bool|mixed
+     */
     public function ChildNS($code){
         $domain = $this->Domain($code);
         return $domain === false ? false : $domain["childNameservers"];
     }
 
+    /**
+     * get domain contacts
+     * @param $code
+     * @param bool $withPrivacy
+     * @return array|bool
+     */
     public function Contacts($code, $withPrivacy = false){
         $domain = $this->Domain($code);
         $contacts = [];
@@ -787,5 +814,35 @@ class ImenaAPIv2 {
 
         $result = $this->_execute(ImenaAPIv2Const::COMMAND_CREATE_CLIENT, $data);
         return $result === false ? false : $result["clientCode"];
+   }
+
+    /**
+     * get auth code for domain transfer
+     * @param $code
+     * @return bool|mixed
+     */
+   public function GetAuthCode($code){
+        $result = $this->_execute(ImenaAPIv2Const::COMMAND_GET_AUTH_CODE, [
+            "serviceCode" => $code
+        ]);
+
+        return $result === false ? false : $result["authCode"];
+   }
+
+    /**
+     * internal transfer process
+     * @param $code - domain service code
+     * @param $authCode - domain auth code
+     * @param $clientCode - client code, who receive domain
+     * @return bool
+     */
+   public function InternalTransfer($code, $authCode, $clientCode){
+       $result = $this->_execute(ImenaAPIv2Const::COMMAND_INTERNAL_TRANSFER, [
+           "serviceCode" => $code,
+           "authCode" => $authCode,
+           "clientCode" => $clientCode
+       ]);
+
+       return $result !== false;
    }
 }

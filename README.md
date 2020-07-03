@@ -2,8 +2,8 @@
 
 This is a implementation of end user classes to access to Imena.ua API.
 
-+ [x] PHP - in release
-+ [ ] JavaScript - in develop
++ [x] PHP
++ [ ] JavaScript
 
 ## Authors
 
