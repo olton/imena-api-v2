@@ -1,4 +1,4 @@
-# Imena.ua API v2 implementation
+# Imena.ua API v2 implementation 1.0.0
 
 This is a implementation of end user classes to access to Imena.ua API.
 
