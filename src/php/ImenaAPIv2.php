@@ -416,6 +416,57 @@ class ImenaAPIv2 {
     }
 
     /**
+     * get specified contact
+     * @param $code
+     * @param string $contactType admin-c, tech-c, billing-c, owner-c in lower case. Default admin-c
+     * @return bool|mixed
+     */
+    public function Contact($code, $contactType = ImenaAPIv2Const::CONTACT_ADMIN){
+        $result = $this->Contacts($code);
+        return $result === false ? false : $result[$contactType];
+    }
+
+    /**
+     * get admin-c
+     * @param $code
+     * @return bool|mixed
+     */
+    public function ContactAdmin($code){
+        $result = $this->Contacts($code);
+        return $result === false ? false : $result[ImenaAPIv2Const::CONTACT_ADMIN];
+    }
+
+    /**
+     * get tech-c
+     * @param $code
+     * @return bool|mixed
+     */
+    public function ContactTech($code){
+        $result = $this->Contacts($code);
+        return $result === false ? false : $result[ImenaAPIv2Const::CONTACT_TECH];
+    }
+
+    /**
+     * get billing-c
+     * @param $code
+     * @return bool|mixed
+     */
+    public function ContactBilling($code){
+        $result = $this->Contacts($code);
+        return $result === false ? false : $result[ImenaAPIv2Const::CONTACT_BILLING];
+    }
+
+    /**
+     * get owner-c
+     * @param $code
+     * @return bool|mixed
+     */
+    public function ContactOwner($code){
+        $result = $this->Contacts($code);
+        return $result === false ? false : $result[ImenaAPIv2Const::CONTACT_OWNER];
+    }
+
+    /**
      * Set name servers.
      * If second argument is an array, command sets user defined NS
      * If second argument is a string, command set one of default sets
@@ -423,6 +474,7 @@ class ImenaAPIv2 {
      * ImenaAPIv2HostingType::DNS - for DNSHosting
      * ImenaAPIv2HostingType::MIROHOST - for Mirohost
      * ImenaAPIv2HostingType::DEFAULTS - for Imena default NS
+     *
      * @param $code
      * @param array $ns
      * @return bool
