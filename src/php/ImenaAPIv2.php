@@ -257,6 +257,7 @@ class ImenaAPIv2 {
 
         if ($result !== false) {
             $this->logged = true;
+            $this->TokenInfo();
         }
 
         return $result === false ? false : $result["authToken"];
@@ -278,7 +279,14 @@ class ImenaAPIv2 {
         } else {
             $data["gaCode"] = $code;
         }
+
         $result = $this->_execute(ImenaAPIv2Const::COMMAND_LOGIN, $data);
+
+        if ($result !== false) {
+            $this->logged = true;
+            $this->TokenInfo();
+        }
+
         return $result === false ? false : $result["authToken"];
     }
 
