@@ -298,6 +298,14 @@ class ImenaAPIv2 {
     }
 
     /**
+     * get logged status
+     * @return bool
+     */
+    public function IsLogged(){
+        return $this->logged;
+    }
+
+    /**
      * Get Reseller/Client info
      * Return info for current logged client
      * @return bool|mixed
