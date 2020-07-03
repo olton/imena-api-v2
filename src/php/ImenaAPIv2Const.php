@@ -16,8 +16,6 @@ class ImenaAPIv2Const {
     const COMMAND_DEL_CHILD_NS = 'deleteDomainChildNameserver';
     const COMMAND_UPD_CONTACT = 'editDomainContact';
     const COMMAND_SET_PRIVACY = 'setDomainPrivacy';
-    const COMMAND_RESELLER_BALANCE = 'getResellerBalance';
-    const COMMAND_RESELLER_PRICES = 'getResellerPrices';
     const COMMAND_CREATE_RENEW_PAYMENT = 'createDomainRenewPayment';
     const COMMAND_CREATE_REGISTRATION_PAYMENT = 'createDomainRegistrationPayment';
     const COMMAND_CREATE_REGISTRATION_ORDER = 'createDomainRegistrationOrder';
@@ -25,6 +23,13 @@ class ImenaAPIv2Const {
     const COMMAND_CREATE_TRANSFER_ORDER = 'createDomainTransferOrder';
     const COMMAND_DELETE_ORDER = 'deleteDomainOrder';
     const COMMAND_PAYMENT_STATUS = 'getResellerPaymentStatus';
+    const COMMAND_RESELLER_BALANCE = 'getResellerBalance';
+    const COMMAND_RESELLER_PRICES = 'getResellerPrices';
+
+    const COMMAND_CREATE_CLIENT = 'createClient';
+    const COMMAND_CLIENT_INFO = 'getClient';
+    const COMMAND_CLIENT_LIST = 'getResellerClientsList';
+    const COMMAND_PICK_DOMAIN = 'pickDomainForReseller';
 
     const CONTACT_ADMIN = 'admin-c';
     const CONTACT_TECH = 'tech-c';

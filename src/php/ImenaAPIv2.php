@@ -123,8 +123,8 @@ class ImenaAPIv2 {
 
     private function _resetError(){
         $this->error_api = null;
-        $this->error = null;
-        $this->error_message = "";
+        $this->error = 0;
+        $this->error_message = "OK";
         $this->errors = [];
     }
 
@@ -694,4 +694,96 @@ class ImenaAPIv2 {
             "paymentId" => $paymentId
         ]);
     }
+
+    /**
+     * pick domains by part of name
+     * @param int $resellerCode
+     * @param array|string $names
+     * @param array|string $zones
+     * @return bool|mixed
+    */
+    public function PickDomain($resellerCode, $names, $zones){
+        return $this->_execute(ImenaAPIv2Const::COMMAND_PICK_DOMAIN, [
+            "resellerCode" => $resellerCode,
+            "names" => is_array($names) ? $names : preg_split(" ", $names),
+            "domainTypes" => is_array($zones) ? $zones : preg_split(" ", $zones),
+        ]);
+    }
+
+    /**
+     * get client info
+     * @param $clientCode
+     * @return bool|mixed
+     */
+    public function Client($clientCode){
+        return $this->_execute(ImenaAPIv2Const::COMMAND_CLIENT_INFO, [
+            "clientCode" => $clientCode
+        ]);
+    }
+
+    /**
+     * get client list for specified reseller
+     * @param $resellerCode
+     * @param int $limit
+     * @param int $offset
+     * @return bool|mixed
+     */
+    public function Clients($resellerCode, $limit = 500, $offset = 0){
+        $result = $this->_execute(ImenaAPIv2Const::COMMAND_CLIENT_LIST, [
+            "resellerCode" => $resellerCode,
+            "limit" => $limit,
+            "offset" => $offset
+        ]);
+        return $result === false ? false : $result["list"];
+    }
+
+    /**
+     * @param $resellerCode
+     * @param string $firstName
+     * @param string $middleName
+     * @param string $lastName
+     * @param string $language ua|ru|en
+     * @param string $clientType individual|sole proprietor|legal entity
+     * @param bool $resident
+     * @param struct $contact
+     * @param struct $legal
+     *
+     * contactData = [
+     *      country*
+     *      postalCode*
+     *      region
+     *      city*
+     *      address*
+     *      address2
+     *      email*
+     *      phone* (format E164)
+     *      fax
+     *      phoneEmergency
+     * ]
+     *
+     * legal = [
+     *      companyName
+     *      EDRPOU
+     *      legalAddress
+     *      accountingPhone
+     * ]
+     */
+    public function CreateClient($resellerCode, $firstName, $middleName, $lastName, $language, $clientType, $resident, $contact, $legal){
+        $data = [
+            "resellerCode" => $resellerCode,
+            "firstName" => $firstName,
+            "middleName" => $middleName,
+            "lastName" => $lastName,
+            "messagesLanguage" => $language,
+            "clientType" => $clientType,
+            "isUaResident" => $resident,
+            "contactData" => $contact,
+        ];
+
+        if ($resident === true && $clientType !== "individual") {
+            $data["legalData"] = $legal;
+        }
+
+        return $this->_execute(ImenaAPIv2Const::COMMAND_CREATE_CLIENT, $data);
+   }
 }
