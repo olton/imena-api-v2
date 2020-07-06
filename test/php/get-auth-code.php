@@ -3,7 +3,7 @@
 namespace Services\ImenaV2;
 
 include "./../../src/php/ImenaAPIv2.php";
-include "auth2.php";
+include "auth.php";
 
 $api = new ImenaAPIv2(IMENA_API_ENDPOINT_P);
 
@@ -12,7 +12,7 @@ if (!$api->Login(IMENA_API_LOGIN, IMENA_API_PASSWORD)) {
     exit(0);
 }
 
-$domain_name = "wots.com.ua";
+$domain_name = "mfo.org.ua";
 
 echo "Login successful\n";
 echo "Get auth code for $domain_name\n";

@@ -263,6 +263,10 @@ class ImenaAPIv2 {
         return $result === false ? false : $result["authToken"];
     }
 
+    public function GetLogin(){
+        return $this->_user;
+    }
+
     /**
      * Second auth
      * @param $code
@@ -350,6 +354,14 @@ class ImenaAPIv2 {
      */
     public function GetUserInfo(){
         return $this->userInfo;
+    }
+
+    /**
+     * get reseller code
+     * @return mixed
+     */
+    public function GetResellerCode(){
+        return $this->userInfo["resellerCode"];
     }
 
     /**
@@ -678,10 +690,13 @@ class ImenaAPIv2 {
 
     /**
      * Get reseller balance
+     * @param $resellerCode
      * @return bool|mixed
      */
-    public function ResellerBalance(){
-        return $this->_execute(ImenaAPIv2Const::COMMAND_RESELLER_BALANCE);
+    public function ResellerBalance($resellerCode){
+        return $this->_execute(ImenaAPIv2Const::COMMAND_RESELLER_BALANCE, [
+            "resellerCode" => $resellerCode
+        ]);
     }
 
     /**
@@ -725,6 +740,22 @@ class ImenaAPIv2 {
             "term" => intval($term)
         ]);
         return $result === false ? false : $result["paymentId"];
+    }
+
+    public function CreateRenewOrder($code, $currentStopDate, $term = 1){
+        $result = $this->_execute(ImenaAPIv2Const::COMMAND_CREATE_RENEW_ORDER, [
+            "serviceCode" => "".$code,
+            "currentStopDate" => $currentStopDate,
+            "term" => intval($term)
+        ]);
+        return $result !== false;
+    }
+
+    public function CancelRenewOrder($code){
+        $result = $this->_execute(ImenaAPIv2Const::COMMAND_CANCEL_RENEW_ORDER, [
+            "serviceCode" => "".$code
+        ]);
+        return $result !== false;
     }
 
     /**

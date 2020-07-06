@@ -18,6 +18,8 @@ class ImenaAPIv2Const {
     const COMMAND_UPD_CONTACT = 'editDomainContact';
     const COMMAND_SET_PRIVACY = 'setDomainPrivacy';
     const COMMAND_CREATE_RENEW_PAYMENT = 'createDomainRenewPayment';
+    const COMMAND_CREATE_RENEW_ORDER = 'createDomainRenewOrder';
+    const COMMAND_CANCEL_RENEW_ORDER = 'cancelDomainRenewOrder';
     const COMMAND_CREATE_REGISTRATION_PAYMENT = 'createDomainRegistrationPayment';
     const COMMAND_CREATE_REGISTRATION_ORDER = 'createDomainRegistrationOrder';
     const COMMAND_CREATE_TRANSFER_PAYMENT = 'createDomainTransferPayment';

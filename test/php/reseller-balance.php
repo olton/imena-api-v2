@@ -7,19 +7,23 @@ include "auth.php";
 
 $api = new ImenaAPIv2(IMENA_API_ENDPOINT);
 
-$result = $api->Login(IMENA_API_LOGIN, IMENA_API_PASSWORD);
-
-if ($result === false) {
+if (!$api->Login(IMENA_API_LOGIN, IMENA_API_PASSWORD)) {
     echo "Login unsuccessful\n";
+    echo $api->ErrorCode() . " : " . $api->ErrorMessage() . "\n";
+    var_dump($api->Command());
+    var_dump($api->Error(true));
     exit(0);
-} else {
-    echo "Login successful\n";
 }
 
-$result = $api->ResellerBalance();
+echo "Login with: " . $api->GetLogin()."\n";
+echo "Reseller code: " . $api->GetResellerCode() . "\n";
+
+$result = $api->ResellerBalance($api->GetResellerCode());
 
 if ($result === false) {
     echo "Can't get Reseller balance\n";
+    echo $api->ErrorCode() . " : " . $api->ErrorMessage() . "\n";
+    var_dump($api->Command());
 } else {
     var_dump($result);
 }
