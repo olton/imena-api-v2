@@ -5,9 +5,9 @@ namespace Services\ImenaV2;
 include "./../../src/php/ImenaAPIv2.php";
 include "auth.php";
 
-$code = 759431;
+$code = 800190;
 
-$api = new ImenaAPIv2(IMENA_API_ENDPOINT_P);
+$api = new ImenaAPIv2(IMENA_API_ENDPOINT);
 
 $result = $api->Login(IMENA_API_LOGIN, IMENA_API_PASSWORD);
 

@@ -5,9 +5,7 @@ namespace Services\ImenaV2;
 include "./../../src/php/ImenaAPIv2.php";
 include "auth.php";
 
-$code = 759431;
-
-$api = new ImenaAPIv2(IMENA_API_ENDPOINT_P);
+$api = new ImenaAPIv2(IMENA_API_ENDPOINT);
 
 $result = $api->Login(IMENA_API_LOGIN, IMENA_API_PASSWORD);
 
@@ -18,7 +16,7 @@ if ($result === false) {
     echo "Login successful\n";
 }
 
-$result = $api->DomainInfo("badko.org.ua");
+$result = $api->DomainInfo("cctld.org.ua");
 
 if ($result === false) {
     echo "Can't get domain info\n";
