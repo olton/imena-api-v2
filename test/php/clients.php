@@ -7,20 +7,19 @@ include "auth.php";
 
 $api = new ImenaAPIv2(IMENA_API_ENDPOINT);
 
-$result = $api->Login(IMENA_API_LOGIN, IMENA_API_PASSWORD);
-
-if ($result === false) {
+if (!$api->Login(IMENA_API_LOGIN, IMENA_API_PASSWORD)) {
     echo "Login unsuccessful\n";
     exit(0);
-} else {
-    echo "Login successful\n";
 }
 
-$result = $api->TokenInfo();
+$result = $api->Clients($api->GetResellerCode());
 
 if ($result === false) {
-    echo "Can't get Token Info\n";
+    echo "Can't get clients list\n";
 } else {
+//    foreach ($result as $domain) {
+//        echo $domain['domainName'] . "\n";
+//    }
     var_dump($result);
 }
 

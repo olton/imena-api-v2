@@ -5,14 +5,14 @@ namespace Services\ImenaV2;
 include "./../../src/php/ImenaAPIv2.php";
 include "auth.php";
 
-$api = new ImenaAPIv2(IMENA_API_ENDPOINT_P);
+$api = new ImenaAPIv2(IMENA_API_ENDPOINT);
 
 if (!$api->Login(IMENA_API_LOGIN, IMENA_API_PASSWORD)) {
     echo "Login unsuccessful\n";
     exit(0);
 }
 
-$domain_name = "mfo.org.ua";
+$domain_name = "cctld.org.ua";
 
 echo "Login successful\n";
 echo "Get auth code for $domain_name\n";
@@ -36,6 +36,6 @@ if ($result === false) {
     exit(0);
 }
 
-echo "Auth code: $result\n";
+echo "Auth code (CS - $service_code): $result\n";
 
 $api->Logout();

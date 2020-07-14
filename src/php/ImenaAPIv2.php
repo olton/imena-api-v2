@@ -11,10 +11,10 @@ class ImenaAPIv2 {
 
     private $end_point = "";
 
-    private $_curl_present = false;
     private $_curl_info = null;
     private $_curl_raw_result = null;
     private $_curl_error = null;
+    private $_curl_error_code = null;
 
     private $_tr_prefix = "";
     private $_tr_suffix = "";
@@ -37,6 +37,8 @@ class ImenaAPIv2 {
     private $userExpired;
     private $userInfo;
     private $logged = false;
+    private $transactionID = null;
+
 
     /**
      * ImenaAPIv2 constructor.
@@ -49,8 +51,9 @@ class ImenaAPIv2 {
         $this->end_point = $endPoint;
         $this->_tr_prefix = $tr_prefix;
         $this->_tr_suffix = $tr_suffix;
-        $this->_curl_present = function_exists("curl_exec") && is_callable("curl_exec");
-        if (!$this->_curl_present) throw new Exception("CURL required!");
+
+        if (!(function_exists("curl_exec") && is_callable("curl_exec")))
+            throw new Exception("CURL required!");
     }
 
     /**
@@ -107,6 +110,8 @@ class ImenaAPIv2 {
 
             $this->_curl_raw_result = curl_exec($ch);
             $this->_curl_info = curl_getinfo($ch);
+            $this->_curl_error = curl_error($ch);
+            $this->_curl_error_code = curl_errno($ch);
 
             curl_close($ch);
 
@@ -117,6 +122,8 @@ class ImenaAPIv2 {
                 $this->error = $this->result["error"]["code"];
                 $this->error_message = $this->result["error"]["message"];
                 $this->errors = isset($this->result["error"]["errors"]) ? $this->result["error"]["errors"] : [];
+            } else {
+                $this->transactionID = $this->result["id"];
             }
 
             return $this->result;
@@ -158,6 +165,10 @@ class ImenaAPIv2 {
             $this->_auth_token = null;
         }
         return !isset($result["result"]) ? false : $result["result"];
+    }
+
+    public function ID(){
+        return $this->transactionID;
     }
 
     /**
@@ -978,16 +989,16 @@ class ImenaAPIv2 {
 
     /**
      * internal transfer process
-     * @param $code - domain service code
+     * @param $serviceCode - domain service code
      * @param $authCode - domain auth code
      * @param $clientCode - client code, who receive domain
      * @return bool
      */
-   public function InternalTransfer($code, $authCode, $clientCode){
+   public function InternalTransfer($serviceCode, $authCode, $clientCode){
        $result = $this->_execute(ImenaAPIv2Const::COMMAND_INTERNAL_TRANSFER, [
-           "serviceCode" => $code,
+           "serviceCode" => "".$serviceCode,
            "authCode" => $authCode,
-           "clientCode" => $clientCode
+           "clientCode" => "".$clientCode
        ]);
 
        return $result !== false;

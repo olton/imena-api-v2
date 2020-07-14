@@ -34,7 +34,7 @@ class ImenaAPIv2Const {
     const COMMAND_CLIENT_LIST = 'getResellerClientsList';
     const COMMAND_PICK_DOMAIN = 'pickDomainForReseller';
     const COMMAND_GET_AUTH_CODE = 'initOutgoingDomainTransfer';
-    const COMMAND_INTERNAL_TRANSFER = 'initOutgoingDomainTransfer';
+    const COMMAND_INTERNAL_TRANSFER = 'internalDomainTransfer';
 
     const CONTACT_ADMIN = 'admin-c';
     const CONTACT_TECH = 'tech-c';
