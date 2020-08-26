@@ -83,11 +83,12 @@ class ImenaAPIv2 {
      * @return array|bool|mixed
      */
     private function _curlExec($cmd, $data = []){
+        $trID = $this->_transactionId();
         $query = [
             "jsonrpc" => "2.0",
             "method" => $cmd,
             "params" => $data,
-            "id" => $this->_transactionId()
+            "id" => $trID
         ];
 
         $this->_command = json_encode($query);
@@ -105,7 +106,7 @@ class ImenaAPIv2 {
 
             curl_setopt($ch, CURLOPT_HTTPHEADER, array(
                 'Content-Type: application/json',
-                'X-ApiTransactionID: ' . $this->_transactionId(),
+                'X-ApiTransactionID: ' . $trID,
             ));
 
             $this->_curl_raw_result = curl_exec($ch);
@@ -398,7 +399,7 @@ class ImenaAPIv2 {
     public function DomainsBy($filter = null){
         $domains = [];
         $limit = 500;
-        $count = $this->DomainsCount();
+        $count = $this->DomainsTotal();
 
         if ($count === false) {
             return false;
@@ -432,7 +433,7 @@ class ImenaAPIv2 {
      * Return count domains on account
      * @return bool|int
      */
-    public function DomainsCount(){
+    public function DomainsTotal(){
         $result = $this->_execute(ImenaAPIv2Const::COMMAND_DOMAINS_LIST, [
             "limit" => 1,
             "offset" => 0
@@ -445,7 +446,7 @@ class ImenaAPIv2 {
      * @param $code - string - domain service code
      * @return bool|mixed
      */
-    public function Domain($code){
+    public function DomainInfo($code){
         return $this->_execute(ImenaAPIv2Const::COMMAND_DOMAIN_INFO, [
             "serviceCode" => "".$code
         ]);
@@ -456,10 +457,20 @@ class ImenaAPIv2 {
      * @param $domain_name
      * @return bool|mixed
      */
-    public function DomainInfo($domain_name){
+    public function DomainInfoShort($domain_name){
         return $this->_execute(ImenaAPIv2Const::COMMAND_DOMAIN_INFO_SHORT, [
             "domainName" => $domain_name
         ]);
+    }
+
+    /**
+     * get domain tags
+     * @param $code
+     * @return bool|mixed
+     */
+    public function Tags($code){
+        $domain = $this->Domain($code);
+        return $domain === false ? false : $domain["tagList"];
     }
 
     /**
@@ -467,7 +478,7 @@ class ImenaAPIv2 {
      * @param $code
      * @return bool|mixed
      */
-    public function NS($code){
+    public function Nameservers($code){
         $domain = $this->Domain($code);
         return $domain === false ? false : $domain["nameservers"];
     }
@@ -477,7 +488,7 @@ class ImenaAPIv2 {
      * @param $code
      * @return bool|mixed
      */
-    public function ChildNS($code){
+    public function ChildNameservers($code){
         $domain = $this->Domain($code);
         return $domain === false ? false : $domain["childNameservers"];
     }
@@ -604,7 +615,7 @@ class ImenaAPIv2 {
      * @param $code - string - domain service code
      * @return bool
      */
-    public function SetDnsHostingNS($code){
+    public function SetDnshostingNS($code){
         return $this->SetNS($code, $command = ImenaAPIv2Const::COMMAND_SET_NS_DNSHOSTING);
     }
 
@@ -668,7 +679,7 @@ class ImenaAPIv2 {
      * fax - телефонный номер в формате E164
      * @return bool
      */
-    public function SetDomainContact($code, $contactType, $contactData){
+    public function SetContact($code, $contactType, $contactData){
         $result = $this->_execute(ImenaAPIv2Const::COMMAND_UPD_CONTACT, [
             "serviceCode" => "".$code,
             "contactType" => $contactType,
@@ -704,27 +715,50 @@ class ImenaAPIv2 {
      * @param $resellerCode
      * @return bool|mixed
      */
-    public function ResellerBalance($resellerCode){
+    public function BalanceInfo($resellerCode = null){
+        if ($resellerCode == null) {
+            $resellerCode = $this->GetResellerCode();
+        }
         return $this->_execute(ImenaAPIv2Const::COMMAND_RESELLER_BALANCE, [
             "resellerCode" => $resellerCode
         ]);
     }
 
+    public function Balance($resellerCode = null){
+        return $this->_execute(ImenaAPIv2Const::COMMAND_RESELLER_BALANCE, [
+            "resellerCode" => $resellerCode
+        ])['balance'];
+    }
+
+    public function Credit($resellerCode = null){
+        return $this->_execute(ImenaAPIv2Const::COMMAND_RESELLER_BALANCE, [
+            "resellerCode" => $resellerCode
+        ])['creditLimit'];
+    }
+
     /**
      * Get Reseller prices
+     * @param null $resellerCode
      * @return bool|mixed
      */
-    public function ResellerPrices(){
-        return $this->_execute(ImenaAPIv2Const::COMMAND_RESELLER_PRICES);
+    public function Price($resellerCode = null){
+        if ($resellerCode == null) {
+            $resellerCode = $this->GetResellerCode();
+        }
+
+        return $this->_execute(ImenaAPIv2Const::COMMAND_RESELLER_PRICES, [
+            "resellerCode" => $resellerCode
+        ]);
     }
 
     /**
      * Get reseller prices for specified domains or part of domain name
      * @param $domain
+     * @param null $resellerCode
      * @return array|bool
      */
-    public function ResellerPriceFor($domain){
-        $result = $this->ResellerPrices();
+    public function PriceDomain($domain = "", $resellerCode = null){
+        $result = $this->Price($resellerCode);
         if ($result === false) {
             return false;
         }
@@ -737,6 +771,51 @@ class ImenaAPIv2 {
         return $domains;
     }
 
+    public function PriceDomains($domainList = [], $resellerCode = null){
+        $result = $this->Price($resellerCode);
+        if ($result === false) {
+            return false;
+        }
+        $domains = [];
+        foreach ($result as $value) {
+            foreach ($domainList as $domain) {
+                if (strpos($value["domain"], $domain) !== false) {
+                    $domains[] = $value;
+                }
+            }
+        }
+        return $domains;
+    }
+
+    public function CreatePayment($paymentType, $serviceCode, $term = 1, $currentStopDate = null){
+        $cmd = ImenaAPIv2Const::PAYMENT_TYPE_UNDEFINED;
+
+        switch ($paymentType) {
+            case ImenaAPIv2Const::PAYMENT_TYPE_REGISTRATION:
+                $cmd = ImenaAPIv2Const::COMMAND_CREATE_REGISTRATION_PAYMENT;
+                break;
+            case ImenaAPIv2Const::PAYMENT_TYPE_RENEW:
+                $cmd = ImenaAPIv2Const::COMMAND_CREATE_RENEW_PAYMENT;
+                break;
+            case ImenaAPIv2Const::PAYMENT_TYPE_TRANSFER:
+                $cmd = ImenaAPIv2Const::COMMAND_CREATE_TRANSFER_PAYMENT;
+                break;
+        }
+
+        $body = [
+            "serviceCode" => "".$serviceCode,
+            "currentStopDate" => $currentStopDate,
+            "term" => intval($term)
+        ];
+
+        if ($currentStopDate) {
+            $body["currentStopDate"] = $currentStopDate;
+        }
+
+        $result = $this->_execute($cmd, $body);
+        return $result === false ? false : $result["paymentId"];
+    }
+
     /**
      * Renew domain
      * @param $code
@@ -744,29 +823,9 @@ class ImenaAPIv2 {
      * @param int $term
      * @return bool|mixed
      */
-    public function CreateRenewPayment($code, $currentStopDate, $term = 1){
-        $result = $this->_execute(ImenaAPIv2Const::COMMAND_CREATE_RENEW_PAYMENT, [
-            "serviceCode" => "".$code,
-            "currentStopDate" => $currentStopDate,
-            "term" => intval($term)
-        ]);
+    public function Renew($code, $currentStopDate, $term = 1){
+        $result = $this->CreatePayment(ImenaAPIv2Const::PAYMENT_TYPE_RENEW, $code, $term, $currentStopDate);
         return $result === false ? false : $result["paymentId"];
-    }
-
-    public function CreateRenewOrder($code, $currentStopDate, $term = 1){
-        $result = $this->_execute(ImenaAPIv2Const::COMMAND_CREATE_RENEW_ORDER, [
-            "serviceCode" => "".$code,
-            "currentStopDate" => $currentStopDate,
-            "term" => intval($term)
-        ]);
-        return $result !== false;
-    }
-
-    public function CancelRenewOrder($code){
-        $result = $this->_execute(ImenaAPIv2Const::COMMAND_CANCEL_RENEW_ORDER, [
-            "serviceCode" => "".$code
-        ]);
-        return $result !== false;
     }
 
     /**
@@ -775,41 +834,9 @@ class ImenaAPIv2 {
      * @param int $term
      * @return bool|mixed
      */
-    public function CreateRegistrationPayment($code, $term = 1){
-        $result = $this->_execute(ImenaAPIv2Const::COMMAND_CREATE_REGISTRATION_PAYMENT, [
-            "serviceCode" => "".$code,
-            "term" => intval($term)
-        ]);
+    public function Add($code, $term = 1){
+        $result = $this->CreatePayment(ImenaAPIv2Const::PAYMENT_TYPE_REGISTRATION, $code, $term);
         return $result === false ? false : $result["paymentId"];
-    }
-
-    /**
-     * Create order for domain registration procedure.
-     * @param $clientCode
-     * @param $domainName
-     * @param int $term
-     * @param null $aeroId
-     * @param null $ensAuthKey
-     * @param null $patentNumber
-     * @param null $patentDate
-     * @param null $nicId
-     * @return bool|mixed
-     */
-    public function CreateRegistrationOrder($clientCode, $domainName, $term = 1, $aeroId = null, $ensAuthKey = null, $patentNumber = null, $patentDate = null, $nicId = null){
-        $data = [
-            "clientCode" => "".$clientCode,
-            "domainName" => $domainName,
-            "term" => $term
-        ];
-
-        if ($aeroId) {$data['aeroId'] = $aeroId;}
-        if ($aeroId && $ensAuthKey) {$data['ensAuthKey'] = $ensAuthKey;}
-        if ($patentNumber) {$data['patentNumber'] = $patentNumber;}
-        if ($patentNumber && $patentDate) {$data['patentDate'] = $patentDate;}
-        if ($nicId) {$data['nicId'] = $nicId;}
-
-        $result = $this->_execute(ImenaAPIv2Const::COMMAND_CREATE_REGISTRATION_ORDER, $data);
-        return $result === false ? false : $result["serviceCode"];
     }
 
     /**
@@ -818,16 +845,14 @@ class ImenaAPIv2 {
      * @param int $term
      * @return bool|mixed
      */
-    public function CreateTransferPayment($code, $term = 1){
-        $result =  $this->_execute(ImenaAPIv2Const::COMMAND_CREATE_TRANSFER_PAYMENT, [
-            "serviceCode" => "".$code,
-            "term" => intval($term)
-        ]);
+    public function Transfer($code, $term = 1){
+        $result =  $this->CreatePayment(ImenaAPIv2Const::PAYMENT_TYPE_TRANSFER, $code, $term);
         return $result === false ? false : $result["paymentId"];
     }
 
     /**
-     * Create transfer order and service code for future domain
+     * Create transfer or registration order and service code for future domain
+     * @param $orderType - [ImenaAPIv2Const::COMMAND_CREATE_TRANSFER_ORDER | ImenaAPIv2Const::COMMAND_CREATE_REGISTRATION_ORDER]
      * @param $clientCode
      * @param $domainName
      * @param int $term
@@ -839,7 +864,9 @@ class ImenaAPIv2 {
      * @param null $nicId
      * @return bool|mixed
      */
-    public function CreateTransferOrder($clientCode, $domainName, $term = 1, $authCode = "", $aeroId = null, $ensAuthKey = null, $patentNumber = null, $patentDate = null, $nicId = null){
+    public function CreateOrder($orderType, $clientCode, $domainName, $term = 1, $authCode = "", $aeroId = null, $ensAuthKey = null, $patentNumber = null, $patentDate = null, $nicId = null){
+        $cmd = $orderType == "transfer" ? ImenaAPIv2Const::COMMAND_CREATE_TRANSFER_ORDER : ImenaAPIv2Const::COMMAND_CREATE_REGISTRATION_ORDER;
+
         $data = [
             "clientCode" => "".$clientCode,
             "domainName" => $domainName,
@@ -853,7 +880,7 @@ class ImenaAPIv2 {
         if ($patentNumber && $patentDate) {$data['patentDate'] = $patentDate;}
         if ($nicId) {$data['nicId'] = $nicId;}
 
-        $result = $this->_execute(ImenaAPIv2Const::COMMAND_CREATE_TRANSFER_ORDER, $data);
+        $result = $this->_execute($cmd, $data);
         return $result === false ? false : $result["serviceCode"];
     }
 
@@ -887,7 +914,10 @@ class ImenaAPIv2 {
      * @param array|string $zones
      * @return bool|mixed
     */
-    public function PickDomain($resellerCode, $names, $zones){
+    public function PickDomain($names, $zones, $resellerCode = null){
+        if ($resellerCode == null) {
+            $resellerCode = $this->GetResellerCode();
+        }
         return $this->_execute(ImenaAPIv2Const::COMMAND_PICK_DOMAIN, [
             "resellerCode" => $resellerCode,
             "names" => is_array($names) ? $names : preg_split(" ", $names),
@@ -900,7 +930,7 @@ class ImenaAPIv2 {
      * @param $clientCode
      * @return bool|mixed
      */
-    public function Client($clientCode){
+    public function ClientInfo($clientCode){
         return $this->_execute(ImenaAPIv2Const::COMMAND_CLIENT_INFO, [
             "clientCode" => $clientCode
         ]);
@@ -913,7 +943,10 @@ class ImenaAPIv2 {
      * @param int $offset
      * @return bool|mixed
      */
-    public function Clients($resellerCode, $limit = 500, $offset = 0){
+    public function Clients($limit = 500, $offset = 0, $resellerCode = null) {
+        if ($resellerCode == null) {
+            $resellerCode = $this->GetResellerCode();
+        }
         $result = $this->_execute(ImenaAPIv2Const::COMMAND_CLIENT_LIST, [
             "resellerCode" => $resellerCode,
             "limit" => $limit,
@@ -954,7 +987,12 @@ class ImenaAPIv2 {
      *      accountingPhone
      * ]
      */
-    public function CreateClient($resellerCode, $firstName, $middleName, $lastName, $language, $clientType, $resident, $contact, $legal){
+    public function CreateClient($firstName, $middleName, $lastName, $language, $clientType, $resident, $contact, $legal, $resellerCode = null ){
+
+        if ($resellerCode == null) {
+            $resellerCode = $this->GetResellerCode();
+        }
+
         $data = [
             "resellerCode" => $resellerCode,
             "firstName" => $firstName,

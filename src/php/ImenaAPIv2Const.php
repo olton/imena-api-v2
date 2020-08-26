@@ -53,4 +53,12 @@ class ImenaAPIv2Const {
 
     const SECOND_AUTH_SMS = 'sms';
     const SECOND_AUTH_GOOGLE = 'google';
+
+    const ORDER_TYPE_TRANSFER = 'transfer';
+    const ORDER_TYPE_REGISTRATION = 'registration';
+
+    const PAYMENT_TYPE_UNDEFINED = 'undefined';
+    const PAYMENT_TYPE_REGISTRATION = 'registration';
+    const PAYMENT_TYPE_TRANSFER = 'transfer';
+    const PAYMENT_TYPE_RENEW = 'renew';
 }

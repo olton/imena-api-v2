@@ -12,7 +12,7 @@ if (!$api->Login(IMENA_API_LOGIN, IMENA_API_PASSWORD)) {
     exit(0);
 }
 
-$result = $api->Clients($api->GetResellerCode());
+$result = $api->Clients();
 
 if ($result === false) {
     echo "Can't get clients list\n";

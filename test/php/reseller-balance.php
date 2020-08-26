@@ -18,7 +18,7 @@ if (!$api->Login(IMENA_API_LOGIN, IMENA_API_PASSWORD)) {
 echo "Login with: " . $api->GetLogin()."\n";
 echo "Reseller code: " . $api->GetResellerCode() . "\n";
 
-$result = $api->ResellerBalance($api->GetResellerCode());
+$result = $api->BalanceInfo();
 
 if ($result === false) {
     echo "Can't get Reseller balance\n";

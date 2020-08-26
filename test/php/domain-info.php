@@ -3,7 +3,7 @@
 namespace Services\ImenaV2;
 
 include "./../../src/php/ImenaAPIv2.php";
-include "auth.php";
+include "auth2.php";
 
 $api = new ImenaAPIv2(IMENA_API_ENDPOINT);
 
@@ -16,7 +16,7 @@ if ($result === false) {
     echo "Login successful\n";
 }
 
-$result = $api->DomainInfo("cctld.org.ua");
+$result = $api->DomainInfoShort("cctld.org.ua");
 
 if ($result === false) {
     echo "Can't get domain info\n";

@@ -16,7 +16,7 @@ if ($result === false) {
     echo "Login successful\n";
 }
 
-$result = $api->DomainsCount();
+$result = $api->DomainsTotal();
 
 if ($result === false) {
     echo "Can't get domains list\n";

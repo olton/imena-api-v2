@@ -3,7 +3,7 @@
 namespace Services\ImenaV2;
 
 include "./../../src/php/ImenaAPIv2.php";
-include "auth.php";
+include "auth2.php";
 
 $code = 800190;
 
@@ -18,10 +18,11 @@ if ($result === false) {
     echo "Login successful\n";
 }
 
-$result = $api->Domain($code);
+$result = $api->DomainInfo($code);
 
 if ($result === false) {
     echo "Can't get domain info\n";
+    var_dump($api->Error());
 } else {
     var_dump($result);
 }

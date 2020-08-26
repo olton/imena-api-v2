@@ -18,7 +18,7 @@ if ($result === false) {
     echo "Login successful\n";
 }
 
-$result = $api->SetDnsHostingNS($code);
+$result = $api->SetDnshostingNS($code);
 
 if ($result === false) {
     echo "Can't set dnshosting ns\n";
