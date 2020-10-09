@@ -396,7 +396,7 @@ class ImenaAPIv2 {
      * @param $filter - string, part of domain name
      * @return array|bool
      */
-    public function DomainsBy($filter = null){
+    public function DomainsBy($filter = ""){
         $domains = [];
         $limit = 500;
         $count = $this->DomainsTotal();
@@ -423,10 +423,16 @@ class ImenaAPIv2 {
                     if (strpos($domain["domainName"], $filter) !== false) {
                         $domains[$domain["serviceCode"]] = $domain;
                     }
+                } else {
+                    $domains[$domain["serviceCode"]] = $domain;
                 }
             }
         }
         return $domains;
+    }
+
+    public function DomainsAll(){
+        return $this->DomainsBy();
     }
 
     /**
@@ -469,7 +475,7 @@ class ImenaAPIv2 {
      * @return bool|mixed
      */
     public function Tags($code){
-        $domain = $this->Domain($code);
+        $domain = $this->DomainInfo($code);
         return $domain === false ? false : $domain["tagList"];
     }
 
@@ -479,7 +485,7 @@ class ImenaAPIv2 {
      * @return bool|mixed
      */
     public function Nameservers($code){
-        $domain = $this->Domain($code);
+        $domain = $this->DomainInfo($code);
         return $domain === false ? false : $domain["nameservers"];
     }
 
@@ -489,8 +495,104 @@ class ImenaAPIv2 {
      * @return bool|mixed
      */
     public function ChildNameservers($code){
-        $domain = $this->Domain($code);
+        $domain = $this->DomainInfo($code);
         return $domain === false ? false : $domain["childNameservers"];
+    }
+
+    /**
+     * Set name servers.
+     * If second argument is an array, command sets user defined NS
+     * If second argument is a string, command set one of default sets
+     * For default sets you must use constants ImenaAPIv2HostingType::MIROHOST or ImenaAPIv2HostingType::DNS
+     * ImenaAPIv2HostingType::DNS - for DNSHosting
+     * ImenaAPIv2HostingType::MIROHOST - for Mirohost
+     * ImenaAPIv2HostingType::DEFAULTS - for Imena default NS
+     *
+     * @param $code
+     * @param array $ns
+     * @return bool
+     */
+    public function SetNS($code, $ns = []){
+        if (count($ns) < 2) {
+            throw new \Error("You must define two or more Name servers!");
+        }
+
+        $data = [
+            "serviceCode" => $code,
+            "list" => $ns
+        ];
+
+        return $this->_execute(ImenaAPIv2Const::COMMAND_SET_NS, $data);
+    }
+
+    public function SetNSPreset($code, $preset = ImenaAPIv2Const::HOSTING_TYPE_DEFAULTS) {
+        $command = ImenaAPIv2Const::COMMAND_SET_NS_DEFAULT;
+        $data = [
+            "serviceCode" => $code
+        ];
+        switch ($preset) {
+            case ImenaAPIv2Const::HOSTING_TYPE_MIROHOST: $command = ImenaAPIv2Const::COMMAND_SET_NS_MIROHOST; break;
+            case ImenaAPIv2Const::HOSTING_TYPE_DNS: $command = ImenaAPIv2Const::COMMAND_SET_NS_DNSHOSTING; break;
+        }
+        return $this->_execute($command, $data);
+    }
+
+    /**
+     * Short method to set Imena default NS
+     * @param $code - string - domain service code
+     * @return bool
+     */
+    public function SetDefaultNS($code){
+        return $this->SetNSPreset($code, ImenaAPIv2Const::HOSTING_TYPE_DEFAULTS);
+    }
+
+    /**
+     * Short method to set DNSHosting NS
+     * @param $code - string - domain service code
+     * @return bool
+     */
+    public function SetDnshostingNS($code){
+        return $this->SetNSPreset($code, ImenaAPIv2Const::HOSTING_TYPE_DNS);
+    }
+
+    /**
+     * Short method to set Mirohost NS
+     * @param $code - string - domain service code
+     * @return bool
+     */
+    public function SetMirohostNS($code){
+        return $this->SetNSPreset($code, ImenaAPIv2Const::HOSTING_TYPE_MIROHOST);
+    }
+
+    /**
+     * Add child NS
+     * @param $code - string, domain service code
+     * @param $host - string, host name
+     * @param $ip - string, ip address
+     * @return bool
+     */
+    public function AddChildNS($code, $host, $ip){
+        $result = $this->_execute(ImenaAPIv2Const::COMMAND_ADD_CHILD_NS, [
+            "serviceCode" => "".$code,
+            "host" => $host,
+            "ip" => $ip
+        ]);
+        return $result === false ? false : true;
+    }
+
+    /**
+     * Delete child NS
+     * @param $code - string, domain service code
+     * @param $host - string, host name
+     * @param $ip - string, ip address
+     * @return bool|mixed
+     */
+    public function DeleteChildNS($code, $host, $ip){
+        return $this->_execute(ImenaAPIv2Const::COMMAND_DEL_CHILD_NS, [
+            "serviceCode" => "".$code,
+            "host" => $host,
+            "ip" => $ip
+        ]);
     }
 
     /**
@@ -500,7 +602,7 @@ class ImenaAPIv2 {
      * @return array|bool
      */
     public function Contacts($code, $withPrivacy = false){
-        $domain = $this->Domain($code);
+        $domain = $this->DomainInfo($code);
         $contacts = [];
         if ($domain === false) return false;
         foreach ($domain["contacts"] as $contact) {
@@ -562,101 +664,6 @@ class ImenaAPIv2 {
     public function ContactOwner($code){
         $result = $this->Contacts($code);
         return $result === false ? false : $result[ImenaAPIv2Const::CONTACT_OWNER];
-    }
-
-    /**
-     * Set name servers.
-     * If second argument is an array, command sets user defined NS
-     * If second argument is a string, command set one of default sets
-     * For default sets you must use constants ImenaAPIv2HostingType::MIROHOST or ImenaAPIv2HostingType::DNS
-     * ImenaAPIv2HostingType::DNS - for DNSHosting
-     * ImenaAPIv2HostingType::MIROHOST - for Mirohost
-     * ImenaAPIv2HostingType::DEFAULTS - for Imena default NS
-     *
-     * @param $code
-     * @param array $ns
-     * @return bool
-     */
-    public function SetNS($code, $ns = []){
-        $command = ImenaAPIv2Const::COMMAND_SET_NS_DEFAULT;
-        $data = [
-            "serviceCode" => $code
-        ];
-
-        if (is_array($ns)) {
-
-            $command = ImenaAPIv2Const::COMMAND_SET_NS;
-            $data["list"] = $ns;
-
-        } else if (is_string($ns)) {
-
-            switch (strtolower($ns)) {
-                case ImenaAPIv2Const::HOSTING_TYPE_MIROHOST: $command = ImenaAPIv2Const::COMMAND_SET_NS_MIROHOST; break;
-                case ImenaAPIv2Const::HOSTING_TYPE_DNS: $command = ImenaAPIv2Const::COMMAND_SET_NS_DNSHOSTING; break;
-            }
-
-        }
-
-        $result = $this->_execute($command, $data);
-        return $result === false ? false : true;
-    }
-
-    /**
-     * Short method to set Imena default NS
-     * @param $code - string - domain service code
-     * @return bool
-     */
-    public function SetDefaultNS($code){
-        return $this->SetNS($code, $command = ImenaAPIv2Const::COMMAND_SET_NS_DEFAULT);
-    }
-
-    /**
-     * Short method to set DNSHosting NS
-     * @param $code - string - domain service code
-     * @return bool
-     */
-    public function SetDnshostingNS($code){
-        return $this->SetNS($code, $command = ImenaAPIv2Const::COMMAND_SET_NS_DNSHOSTING);
-    }
-
-    /**
-     * Short method to set Mirohost NS
-     * @param $code - string - domain service code
-     * @return bool
-     */
-    public function SetMirohostNS($code){
-        return $this->SetNS($code, $command = ImenaAPIv2Const::COMMAND_SET_NS_MIROHOST);
-    }
-
-    /**
-     * Add child NS
-     * @param $code - string, domain service code
-     * @param $host - string, host name
-     * @param $ip - string, ip address
-     * @return bool
-     */
-    public function AddChildNS($code, $host, $ip){
-        $result = $this->_execute(ImenaAPIv2Const::COMMAND_ADD_CHILD_NS, [
-            "serviceCode" => "".$code,
-            "host" => $host,
-            "ip" => $ip
-        ]);
-        return $result === false ? false : true;
-    }
-
-    /**
-     * Delete child NS
-     * @param $code - string, domain service code
-     * @param $host - string, host name
-     * @param $ip - string, ip address
-     * @return bool|mixed
-     */
-    public function DeleteChildNS($code, $host, $ip){
-        return $this->_execute(ImenaAPIv2Const::COMMAND_DEL_CHILD_NS, [
-            "serviceCode" => "".$code,
-            "host" => $host,
-            "ip" => $ip
-        ]);
     }
 
     /**
@@ -787,19 +794,16 @@ class ImenaAPIv2 {
         return $domains;
     }
 
-    public function CreatePayment($paymentType, $serviceCode, $term = 1, $currentStopDate = null){
-        $cmd = ImenaAPIv2Const::PAYMENT_TYPE_UNDEFINED;
-
+    public function Payment($paymentType, $serviceCode, $term = 1, $currentStopDate = null){
         switch ($paymentType) {
-            case ImenaAPIv2Const::PAYMENT_TYPE_REGISTRATION:
-                $cmd = ImenaAPIv2Const::COMMAND_CREATE_REGISTRATION_PAYMENT;
-                break;
             case ImenaAPIv2Const::PAYMENT_TYPE_RENEW:
                 $cmd = ImenaAPIv2Const::COMMAND_CREATE_RENEW_PAYMENT;
                 break;
             case ImenaAPIv2Const::PAYMENT_TYPE_TRANSFER:
                 $cmd = ImenaAPIv2Const::COMMAND_CREATE_TRANSFER_PAYMENT;
                 break;
+            default:
+                $cmd = ImenaAPIv2Const::COMMAND_CREATE_REGISTRATION_PAYMENT;
         }
 
         $body = [
@@ -824,7 +828,7 @@ class ImenaAPIv2 {
      * @return bool|mixed
      */
     public function Renew($code, $currentStopDate, $term = 1){
-        $result = $this->CreatePayment(ImenaAPIv2Const::PAYMENT_TYPE_RENEW, $code, $term, $currentStopDate);
+        $result = $this->Payment(ImenaAPIv2Const::PAYMENT_TYPE_RENEW, $code, $term, $currentStopDate);
         return $result === false ? false : $result["paymentId"];
     }
 
@@ -835,7 +839,7 @@ class ImenaAPIv2 {
      * @return bool|mixed
      */
     public function Add($code, $term = 1){
-        $result = $this->CreatePayment(ImenaAPIv2Const::PAYMENT_TYPE_REGISTRATION, $code, $term);
+        $result = $this->Payment(ImenaAPIv2Const::PAYMENT_TYPE_REGISTRATION, $code, $term);
         return $result === false ? false : $result["paymentId"];
     }
 
@@ -846,7 +850,7 @@ class ImenaAPIv2 {
      * @return bool|mixed
      */
     public function Transfer($code, $term = 1){
-        $result =  $this->CreatePayment(ImenaAPIv2Const::PAYMENT_TYPE_TRANSFER, $code, $term);
+        $result =  $this->Payment(ImenaAPIv2Const::PAYMENT_TYPE_TRANSFER, $code, $term);
         return $result === false ? false : $result["paymentId"];
     }
 
@@ -864,7 +868,7 @@ class ImenaAPIv2 {
      * @param null $nicId
      * @return bool|mixed
      */
-    public function CreateOrder($orderType, $clientCode, $domainName, $term = 1, $authCode = "", $aeroId = null, $ensAuthKey = null, $patentNumber = null, $patentDate = null, $nicId = null){
+    public function Order($orderType, $clientCode, $domainName, $term = 1, $authCode = "", $aeroId = null, $ensAuthKey = null, $patentNumber = null, $patentDate = null, $nicId = null){
         $cmd = $orderType == "transfer" ? ImenaAPIv2Const::COMMAND_CREATE_TRANSFER_ORDER : ImenaAPIv2Const::COMMAND_CREATE_REGISTRATION_ORDER;
 
         $data = [
@@ -889,7 +893,7 @@ class ImenaAPIv2 {
      * @param $code
      * @return bool
      */
-    public function DeleteUnusedOrder($code){
+    public function DeleteOrders($code){
         $result = $this->_execute(ImenaAPIv2Const::COMMAND_DELETE_ORDER, [
             "serviceCode" => "".$code
         ]);
@@ -956,7 +960,6 @@ class ImenaAPIv2 {
     }
 
     /**
-     * @param $resellerCode
      * @param string $firstName
      * @param string $middleName
      * @param string $lastName
@@ -965,6 +968,7 @@ class ImenaAPIv2 {
      * @param bool $resident
      * @param array $contact
      * @param array $legal
+     * @param $resellerCode
      * @return bool|mixed
      *
      * contactData = [
@@ -1037,6 +1041,38 @@ class ImenaAPIv2 {
            "serviceCode" => "".$serviceCode,
            "authCode" => $authCode,
            "clientCode" => "".$clientCode
+       ]);
+
+       return $result !== false;
+   }
+
+   public function DnsInfo($code){
+       $result = $this->_execute(ImenaAPIv2Const::COMMAND_DNS_GET_DATA, [
+           "serviceCode" => $code
+       ]);
+
+       return $result === false ? false : $result;
+   }
+
+   public function SetDnsDefault($code){
+       $result = $this->_execute(ImenaAPIv2Const::COMMAND_DNS_SET_DEFAULT, [
+           "serviceCode" => "".$code
+       ]);
+
+       return $result !== false;
+   }
+
+   public function SetDnsInfo($code, $records, $retry = 600, $ttl = 3600, $negativeTtl = 1800, $refresh = 1800, $expire = 2419200){
+       $result = $this->_execute(ImenaAPIv2Const::COMMAND_DNS_SET_DATA, [
+           "serviceCode" => "".$code,
+           "dnsZone" => [
+               "retry" => $retry,
+               "ttl" => $ttl,
+               "negativeTtl" => $negativeTtl,
+               "refresh" => $refresh,
+               "expire" => $expire,
+               "records" => $records
+           ]
        ]);
 
        return $result !== false;
