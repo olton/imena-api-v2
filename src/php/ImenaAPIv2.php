@@ -68,11 +68,10 @@ class ImenaAPIv2 {
      * Generate transaction ID
      * @return string
      */
-    private function _transactionId(){
+    private function _transactionId() {
         return $this->_tr_prefix
             . date('YmdHis')
-            .""
-            . round(microtime(true),0)
+            . "-".substr(str_shuffle("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"), 0, 10)."-"
             . $this->_tr_suffix;
     }
 
@@ -165,7 +164,7 @@ class ImenaAPIv2 {
         if ($command === ImenaAPIv2Const::COMMAND_LOGOUT) {
             $this->_auth_token = null;
         }
-        return !isset($result["result"]) ? false : $result["result"];
+        return isset($result["error"]) ? false : $result["result"];
     }
 
     public function ID(){
@@ -272,7 +271,7 @@ class ImenaAPIv2 {
             $this->TokenInfo();
         }
 
-        return !$result ? false : $result["authToken"];
+        return $result === false ? false : $result["authToken"];
     }
 
     public function GetLogin(){
@@ -303,7 +302,7 @@ class ImenaAPIv2 {
             $this->TokenInfo();
         }
 
-        return !$result ? false : $result["authToken"];
+        return $result === false ? false : $result["authToken"];
     }
 
     /**
@@ -387,7 +386,7 @@ class ImenaAPIv2 {
             "limit" => $limit,
             "offset" => $offset
         ]);
-        return !$result ? false : $result["list"];
+        return $result === false ? false : $result["list"];
     }
 
     /**
@@ -444,7 +443,7 @@ class ImenaAPIv2 {
             "limit" => 1,
             "offset" => 0
         ]);
-        return !$result ? false : intval($result["total"]);
+        return $result === false ? false : intval($result["total"]);
     }
 
     /**
@@ -577,7 +576,7 @@ class ImenaAPIv2 {
             "host" => $host,
             "ip" => $ip
         ]);
-        return !$result ? false : true;
+        return $result === false ? false : true;
     }
 
     /**
@@ -623,7 +622,7 @@ class ImenaAPIv2 {
      */
     public function Contact($code, $contactType = ImenaAPIv2Const::CONTACT_ADMIN){
         $result = $this->Contacts($code);
-        return !$result ? false : $result[$contactType];
+        return $result === false ? false : $result[$contactType];
     }
 
     /**
@@ -633,7 +632,7 @@ class ImenaAPIv2 {
      */
     public function ContactAdmin($code){
         $result = $this->Contacts($code);
-        return !$result ? false : $result[ImenaAPIv2Const::CONTACT_ADMIN];
+        return $result === false ? false : $result[ImenaAPIv2Const::CONTACT_ADMIN];
     }
 
     /**
@@ -643,7 +642,7 @@ class ImenaAPIv2 {
      */
     public function ContactTech($code){
         $result = $this->Contacts($code);
-        return !$result ? false : $result[ImenaAPIv2Const::CONTACT_TECH];
+        return $result === false ? false : $result[ImenaAPIv2Const::CONTACT_TECH];
     }
 
     /**
@@ -653,7 +652,7 @@ class ImenaAPIv2 {
      */
     public function ContactBilling($code){
         $result = $this->Contacts($code);
-        return !$result ? false : $result[ImenaAPIv2Const::CONTACT_BILLING];
+        return $result === false ? false : $result[ImenaAPIv2Const::CONTACT_BILLING];
     }
 
     /**
@@ -663,7 +662,7 @@ class ImenaAPIv2 {
      */
     public function ContactOwner($code){
         $result = $this->Contacts($code);
-        return !$result ? false : $result[ImenaAPIv2Const::CONTACT_OWNER];
+        return $result === false ? false : $result[ImenaAPIv2Const::CONTACT_OWNER];
     }
 
     /**
@@ -692,7 +691,7 @@ class ImenaAPIv2 {
             "contactType" => $contactType,
             "contact" => $contactData
         ]);
-        return !$result ? false : true;
+        return $result === false ? false : true;
     }
 
     /**
@@ -702,11 +701,10 @@ class ImenaAPIv2 {
      * @return bool
      */
     public function SetPrivacy($code, $disclose = false){
-        $result = $this->_execute(ImenaAPIv2Const::COMMAND_SET_PRIVACY, [
+        return $this->_execute(ImenaAPIv2Const::COMMAND_SET_PRIVACY, [
             "serviceCode" => "".$code,
-            "whoisPrivacy" => !$disclose
+            "whoisPrivacy" => $disclose == false
         ]);
-        return !$result ? false : true;
     }
 
     /**
@@ -821,7 +819,7 @@ class ImenaAPIv2 {
         }
 
         $result = $this->_execute($cmd, $body);
-        return !$result ? false : $result["paymentId"];
+        return $result === false ? false : $result["paymentId"];
     }
 
     /**
@@ -833,7 +831,7 @@ class ImenaAPIv2 {
      */
     public function Renew($code, $currentStopDate, $term = 1){
         $result = $this->Payment(ImenaAPIv2Const::PAYMENT_TYPE_RENEW, $code, $term, $currentStopDate);
-        return !$result ? false : $result["paymentId"];
+        return $result === false ? false : $result;
     }
 
     /**
@@ -844,7 +842,7 @@ class ImenaAPIv2 {
      */
     public function Add($code, $term = 1){
         $result = $this->Payment(ImenaAPIv2Const::PAYMENT_TYPE_REGISTRATION, $code, $term);
-        return !$result ? false : $result["paymentId"];
+        return $result === false ? false : $result;
     }
 
     /**
@@ -855,7 +853,7 @@ class ImenaAPIv2 {
      */
     public function Transfer($code, $term = 1){
         $result =  $this->Payment(ImenaAPIv2Const::PAYMENT_TYPE_TRANSFER, $code, $term);
-        return !$result ? false : $result["paymentId"];
+        return $result === false ? false : $result;
     }
 
     /**
@@ -889,7 +887,7 @@ class ImenaAPIv2 {
         if ($nicId) {$data['nicId'] = $nicId;}
 
         $result = $this->_execute($cmd, $data);
-        return !$result ? false : $result["serviceCode"];
+        return $result === false ? false : $result["serviceCode"];
     }
 
     /**
@@ -901,7 +899,7 @@ class ImenaAPIv2 {
         $result = $this->_execute(ImenaAPIv2Const::COMMAND_DELETE_ORDER, [
             "serviceCode" => "".$code
         ]);
-        return !$result ? false : true;
+        return $result === false ? false : true;
     }
 
     /**
@@ -960,7 +958,7 @@ class ImenaAPIv2 {
             "limit" => $limit,
             "offset" => $offset
         ]);
-        return !$result ? false : $result["list"];
+        return $result === false ? false : $result["list"];
     }
 
     /**
@@ -1017,7 +1015,7 @@ class ImenaAPIv2 {
         }
 
         $result = $this->_execute(ImenaAPIv2Const::COMMAND_CREATE_CLIENT, $data);
-        return !$result ? false : $result["clientCode"];
+        return $result === false ? false : $result["clientCode"];
    }
 
     /**
@@ -1030,7 +1028,7 @@ class ImenaAPIv2 {
             "serviceCode" => $code
         ]);
 
-        return !$result ? false : $result["authCode"];
+        return $result === false ? false : $result["authCode"];
    }
 
     /**
@@ -1051,19 +1049,15 @@ class ImenaAPIv2 {
    }
 
    public function DnsInfo($code){
-       $result = $this->_execute(ImenaAPIv2Const::COMMAND_DNS_GET_DATA, [
+       return $this->_execute(ImenaAPIv2Const::COMMAND_DNS_GET_DATA, [
            "serviceCode" => "".$code
        ]);
-
-       return !$result ? false : $result;
    }
 
    public function SetDnsDefault($code){
-       $result = $this->_execute(ImenaAPIv2Const::COMMAND_DNS_SET_DEFAULT, [
+       return $this->_execute(ImenaAPIv2Const::COMMAND_DNS_SET_DEFAULT, [
            "serviceCode" => "".$code
        ]);
-
-       return $result !== false;
    }
 
    public function SetDnsInfo($code, $records, $retry = 600, $ttl = 3600, $negativeTtl = 1800, $refresh = 1800, $expire = 2419200){
@@ -1076,9 +1070,6 @@ class ImenaAPIv2 {
            "expire" => $expire,
            "records" => $records
        ];
-
-       echo "Request:\n";
-       var_dump($dnsZone);
 
        $result = $this->_execute(ImenaAPIv2Const::COMMAND_DNS_SET_DATA, $dnsZone);
 
